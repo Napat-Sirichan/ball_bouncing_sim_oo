@@ -7,7 +7,6 @@ import paddle
 
 class BouncingSimulator:
     def __init__(self, num_balls):
-        self.bullets = []  # List to store bullets <<<<<<<<<<<<<<<<<<<<<<<<<<<<
         self.num_balls = num_balls
         self.ball_list = []
         self.t = 0.0
@@ -65,31 +64,15 @@ class BouncingSimulator:
             turtle.forward(2*self.canvas_height)
             turtle.left(90)
 
-    # def __redraw(self):
-    #     turtle.clear()
-    #     self.my_paddle.clear()
-    #     self.__draw_border()
-    #     self.my_paddle.draw()
-    #     for i in range(len(self.ball_list)):
-    #         self.ball_list[i].draw()
-    #     turtle.update()
-    #     heapq.heappush(self.pq, my_event.Event(self.t + 1.0/self.HZ, None, None, None))
-
     def __redraw(self):
         turtle.clear()
         self.my_paddle.clear()
         self.__draw_border()
         self.my_paddle.draw()
-
-        # Draw balls
-        for ball in self.ball_list:
-            ball.draw()
-
-        # Draw bullets
-        for bullet in self.bullets:
-            bullet.draw()
-
+        for i in range(len(self.ball_list)):
+            self.ball_list[i].draw()
         turtle.update()
+        heapq.heappush(self.pq, my_event.Event(self.t + 1.0/self.HZ, None, None, None))
 
     def __paddle_predict(self):
         for i in range(len(self.ball_list)):
@@ -106,25 +89,6 @@ class BouncingSimulator:
     def move_right(self):
         if (self.my_paddle.location[0] + self.my_paddle.width/2 + 40) <= self.canvas_width:
             self.my_paddle.set_location([self.my_paddle.location[0] + 40, self.my_paddle.location[1]])
-
-    def fire_bullet(self): # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        # Get paddle location
-        paddle_x, paddle_y = self.my_paddle.location
-
-        # Create a new bullet at the paddle's position
-        bullet = Bullet(
-            size=10,              # Radius of the bullet
-            x=paddle_x,           # Start at paddle's x position
-            y=paddle_y + 20,      # Start slightly above the paddle
-            vx=0,                 # No horizontal velocity
-            vy=50,                # Vertical velocity upwards
-            color="red",          # Bullet color
-            id="player_bullet",   # Identifier
-            owner="player"        # Bullet owner
-        )
-
-        # Add bullet to the list of bullets
-        self.bullets.append(bullet)
 
     def run(self):
         # initialize pq with collision events and redraw event
@@ -176,10 +140,3 @@ class BouncingSimulator:
 num_balls = 10
 my_simulator = BouncingSimulator(num_balls)
 my_simulator.run()
-
-# Move bullets and check if they are out of bounds
-for bullet in self.bullets[:]:
-    bullet.move(e.time - self.t)  # Update bullet position
-    if bullet.check_out_of_bounds():
-        self.bullets.remove(bullet)  # Remove bullets that are out of bounds
-self.screen.onkey(self.fire_bullet, "Up")
