@@ -24,7 +24,6 @@ is_right_pressed = False
 is_down_pressed = False
 is_space_pressed = False  # Track the Spacebar state
 
-
 def draw_ball(color, size, x, y):
     """Draw a ball at (x, y) with a specified color and size."""
     # Normalize the RGB color to 0-1 range
@@ -39,7 +38,6 @@ def draw_ball(color, size, x, y):
     turtle.circle(size)
     turtle.end_fill()
     turtle.penup()
-
 
 def move_ball(index):
     """Move the ball based on its velocity and update position."""
@@ -62,7 +60,7 @@ def setup_screen():
     screen.bgcolor("skyblue")
     screen.setup(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
     screen.register_shape("AIRPLANE.gif")  # Register the airplane shape
-    screen.register_shape("AIRPLANE_3.gif")
+    screen.register_shape("AIRPLANE_4.gif")
     turtle.tracer(0)  # Disable auto-screen updates
     turtle.hideturtle()  # Hide the main turtle
     return screen
@@ -78,7 +76,7 @@ def setup_airplane():
 
 def setup_enemy_airplane():
     enemy_airplane = turtle.Turtle()
-    enemy_airplane.shape("AIRPLANE_3.gif")  # Default shape
+    enemy_airplane.shape("AIRPLANE_4.gif")  # Default shape
     enemy_airplane.penup()  # Lift the pen to prevent drawing lines
     enemy_airplane.goto(100, 200)  # Position the enemy airplane
     return enemy_airplane

@@ -1,1 +1,1 @@
-(5)
+turtle.done()
