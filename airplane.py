@@ -94,6 +94,8 @@ class Airplane:
         self._turtle.getscreen().update()  # Ensure screen is updated after destruction
         self._explosion_turtle.clear()  # Clear any explosion remnants
 
+    def score(self): 
+        self.score += 1
 
     def _check_bullet_collision(self, bullet, target):
         """Check for bullet collision with target airplane."""
@@ -158,6 +160,7 @@ class Airplane:
         self._bullets.clear()  # Clear the list of bullets
 
 
+
 class PlayerAirplane(Airplane):
     def __init__(self, position, velocity, shape, health, size=20):
         super().__init__(position, velocity, shape, health, size)
@@ -167,9 +170,19 @@ class PlayerAirplane(Airplane):
         self._is_down_pressed = False
         self._is_space_pressed = False
 
-        self._turtle.penup()  # ยกปากกา
-        self._turtle.goto(self._position)  # ย้ายเครื่องบินไปตำแหน่งที่กำหนด
-        self._turtle.showturtle()  # แสดงเต่า
+        self._turtle.penup()
+        self._turtle.goto(self._position)
+        self._turtle.showturtle()
+
+        # Abilities and settings
+        self.is_tridirectional = False  # Flag for tri-directional shooting
+        self.bullet_size = size  # Default bullet size
+        self.speed_multiplier = 1  # Default speed multiplier
+        self.last_shot_time = 0  # Last shot time for cooldown
+        self.shot_cooldown = 0.2  # Cooldown time between shots (in seconds)
+        self.score = 0  # Initialize score as an integer attribute
+        self.ability_activation_time = 0 
+
 
     def press_up(self):
         self._is_up_pressed = True
@@ -197,88 +210,105 @@ class PlayerAirplane(Airplane):
 
     def press_space(self):
         self._is_space_pressed = True
-        # สร้างกระสุนใหม่ที่ตำแหน่งของเครื่องบิน
-        bullet = Bullet(
-            x=self.x,
-            y=self.y + self.size + 5,  # อยู่เหนือเครื่องบินเล็กน้อย
-            vx=0,
-            vy=BULLET_SPEED,           # ความเร็วในการเคลื่อนที่
-            owner=PLAYER
-        )
-        self.add_bullet(bullet)
+        self.shoot()  # Trigger the shoot method when space is pressed
 
     def release_space(self):
         self._is_space_pressed = False
 
+    def distance(self, other):
+        """Calculate the distance between the player and another object."""
+        dx = self.x - other.x
+        dy = self.y - other.y
+        return math.sqrt(dx**2 + dy**2)
+
+    def activate_tridirectional_shooting(self):
+        """Activate tri-directional shooting ability."""
+        self.is_tridirectional = True
+        self.ability_activation_time = time.time()  # Store the time when ability is activated
+        print("Tri-Directional Shooting Activated!")
+
+
+    def increase_health(self):
+        """Increase player's health."""
+        self._health += 1  # Increase health by 10 points
+        print(f"Health increased! Current health: {self._health}")
+
+    def double_speed(self):
+        """Increase the player's movement speed."""
+        self.speed_multiplier = 1.8  # Increase speed multiplier to 1.4
+        self.ability_activation_time = time.time()
+        print("Speed Increased to 1.8x!")
+
+    def deactivate_ability(self):
+        """Deactivate the ability after 5 seconds."""
+        self.is_tridirectional = False
+        self.speed_multiplier = 1.0  # Reset speed multiplier to normal
+        
+        print("Abilities deactivated.")
+
     def move_airplane_directional(self):
-        """Update position based on keypresses."""
+        """Update position based on keypresses, considering speed multiplier."""
         dx, dy = 0, 0
 
-        # Diagonal Up-Left
-        if self._is_up_pressed and self._is_left_pressed and self.y < SCREEN_HEIGHT / 2 - self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
-            dy += PLAYER_SPEED
-            dx -= PLAYER_SPEED
+        # Diagonal movement handling
+        if self._is_up_pressed and self._is_left_pressed:
+            dy += PLAYER_SPEED * self.speed_multiplier
+            dx -= PLAYER_SPEED * self.speed_multiplier
 
-        # Diagonal Up-Right
-        if self._is_up_pressed and self._is_right_pressed and self.y < SCREEN_HEIGHT / 2 - self.size and self.x < SCREEN_WIDTH / 2 - self.size:
-            dy += PLAYER_SPEED
-            dx += PLAYER_SPEED
+        if self._is_up_pressed and self._is_right_pressed:
+            dy += PLAYER_SPEED * self.speed_multiplier
+            dx += PLAYER_SPEED * self.speed_multiplier
 
-        # Diagonal Down-Left
-        if self._is_down_pressed and self._is_left_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
-            dy -= PLAYER_SPEED
-            dx -= PLAYER_SPEED
+        if self._is_down_pressed and self._is_left_pressed:
+            dy -= PLAYER_SPEED * self.speed_multiplier
+            dx -= PLAYER_SPEED * self.speed_multiplier
 
-        # Diagonal Down-Right
-        if self._is_down_pressed and self._is_right_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size and self.x < SCREEN_WIDTH / 2 - self.size:
-            dy -= PLAYER_SPEED
-            dx += PLAYER_SPEED
+        if self._is_down_pressed and self._is_right_pressed:
+            dy -= PLAYER_SPEED * self.speed_multiplier
+            dx += PLAYER_SPEED * self.speed_multiplier
 
-        # Move up
-        if self._is_up_pressed and self.y < SCREEN_HEIGHT / 2 - self.size:
-            dy += PLAYER_SPEED
+        if self._is_up_pressed:
+            dy += PLAYER_SPEED * self.speed_multiplier+0.5
 
-        # Move down
-        if self._is_down_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size:
-            dy -= PLAYER_SPEED
+        if self._is_down_pressed:
+            dy -= PLAYER_SPEED * self.speed_multiplier+0.5
 
-        # Move left
-        if self._is_left_pressed and self.x > -SCREEN_WIDTH / 2 + self.size:
-            dx -= PLAYER_SPEED
+        if self._is_left_pressed:
+            dx -= PLAYER_SPEED * self.speed_multiplier
 
-        # Move right
-        if self._is_right_pressed and self.x < SCREEN_WIDTH / 2 - self.size:
-            dx += PLAYER_SPEED
+        if self._is_right_pressed:
+            dx += PLAYER_SPEED * self.speed_multiplier
 
+        # Update position and make sure the airplane stays within the screen bounds
         new_x = self.x + dx
         new_y = self.y + dy
 
-        # Update position if within boundaries
-        if -SCREEN_WIDTH / 2 + self.size < new_x < SCREEN_WIDTH / 2 - self.size and -SCREEN_HEIGHT / 2 + self.size < new_y < SCREEN_HEIGHT / 2 - self.size:
+        if -SCREEN_WIDTH / 2 + self.size < new_x < SCREEN_WIDTH / 2 - self.size and -SCREEN_HEIGHT /2 + self.size < new_y < SCREEN_HEIGHT /2 - self.size:
             self.position = (new_x, new_y)
-
-        # Print the new position
-        print(f"Player Airplane Position - X: {new_x}, Y: {new_y}")
 
         turtle.update()
 
     def update(self, target):
         """Update the airplane and its bullets."""
+        current_time = time.time()
+        
+        # Check if 5 seconds have passed since ability activation
+        if self.is_tridirectional and current_time - self.ability_activation_time > 5:
+            self.deactivate_ability()  # Deactivate the ability after 5 seconds
+        
         self.move_airplane_directional()
         self.update_bullets(target)
 
     def update_bullets(self, enemies):
         """Update all active bullets and check for collision with all enemies."""
         for bullet in self._bullets[:]:
-            bullet.move()  # Move the bullet
+            bullet.move()
 
-            # Check collision with all enemies
             for enemy in enemies:
                 if self._check_bullet_collision(bullet, enemy):
                     self.handle_bullet_collision(bullet, enemy)
-                    break  # Stop checking further once the bullet hits an enemy
+                    break
 
-            # If the bullet goes off screen, remove it
             if bullet.is_off_screen():
                 bullet.hide_bullet()
                 self._bullets.remove(bullet)
@@ -289,6 +319,52 @@ class PlayerAirplane(Airplane):
         bullet.hide_bullet()  # Hide the bullet
         self._bullets.remove(bullet)  # Remove bullet from the list
 
+    def shoot(self):
+        """Handle shooting logic, including tri-directional shooting."""
+        current_time = time.time()
+
+        # Adjust cooldown for Tri-Directional Shooting
+        if self.is_tridirectional:
+            cooldown = 0.5  # Longer cooldown for Tri-Directional Shooting
+        else:
+            cooldown = self.shot_cooldown  # Default cooldown
+
+        # Check if the cooldown time has passed before shooting
+        if current_time - self.last_shot_time > cooldown:
+            self.last_shot_time = current_time  # Update last shot time
+
+            if self.is_tridirectional:
+                # Tri-directional shooting: Angles for left, center, right (upward direction)
+                angles = [120, 90, 60]  # Adjust angles to shoot upwards
+                for angle in angles:
+                    # dx is horizontal movement (small for upward direction), dy is vertical movement
+                    dx = math.cos(math.radians(angle)) * 5  # Horizontal movement (left/right)
+                    dy = math.sin(math.radians(angle)) * 5  # Vertical movement (upward)
+                    bullet = Bullet(
+                        x=self.x,
+                        y=self.y + self.bullet_size + 5,  # Slightly above the plane
+                        vx=dx,
+                        vy=dy,
+                        owner=PLAYER
+                    )
+                    self.add_bullet(bullet)
+
+                print("Tri-Directional Shooting Activated!")  # Print message when Tri-Directional Shooting is active
+            else:
+                # Normal shooting behavior
+                bullet = Bullet(
+                    x=self.x,
+                    y=self.y + self.size + 5,  # Slightly above the plane
+                    vx=0,
+                    vy=BULLET_SPEED,  # Normal bullet speed
+                    owner=PLAYER
+                )
+                self.add_bullet(bullet)
+        else:
+            print("Shooting is on cooldown!")
+
+
+
 
 class EnemyAirplane(Airplane):
     def __init__(self, position, velocity, shape, health, size=20):
@@ -298,11 +374,12 @@ class EnemyAirplane(Airplane):
         self.max_bullets = 5  # Max bullets for AIRPLANE_4 behavior
         self.bullet_count = 0  # Track how many bullets have been shot
 
-    def move_enemy_airplane(self):
+    def move_enemy_airplane(self,target):
         """Move the enemy airplane downward."""
         new_x, new_y = self.x, self.y - ENEMY_SPEED  # Move downward
         if new_y < -SCREEN_HEIGHT / 2 + self.size:
-            self.position = (new_x, SCREEN_HEIGHT / 2 - self.size)  # Reset to the top
+            target.take_damage(1)
+            self.destroy()
         else:
             self.position = (new_x, new_y)
 
@@ -387,7 +464,7 @@ class EnemyAirplane(Airplane):
     def update(self, target):
         """Update the enemy airplane and handle collisions."""
         if not self._is_destroyed:  # Only update movement and shooting if the airplane is not destroyed
-            self.move_enemy_airplane()
+            self.move_enemy_airplane(target)
             self.update_bullets(target)
             self.handle_shooting(target)  # Implement enemy shooting logic
         else:
@@ -413,7 +490,7 @@ class EnemyAirplane(Airplane):
 
     def handle_bullet_collision(self, bullet, target):
         """Handle the effect of a bullet collision."""
-        target.take_damage(10)  # Reduce the health of the target
+        target.take_damage(1)  # Reduce the health of the target
         bullet.hide_bullet()  # Hide the bullet
         self._bullets.remove(bullet)  # Remove bullet from the list
 
