@@ -1,7 +1,7 @@
 import turtle
 import tkinter as tk
-from const import *  # Make sure SCREEN_WIDTH, SCREEN_HEIGHT, and BG_IMAGE_PATHS are defined here
-import airplane as A
+from const import *  # Make sure SCREEN_WIDTH, SCREEN_HEIGHT, BG_IMAGE_PATHS are defined here
+from airplane import *
 
 SCROLL_SPEED = 6  # Adjust scroll speed to a smoother rate
 
@@ -65,7 +65,6 @@ def scroll_background():
         
         # If the image scrolls past the bottom, move it to the top
         if y >= SCREEN_HEIGHT:  # If it goes beyond the bottom of the screen
-            # Find the highest y-coordinate and place the image back at the top
             max_y = min([canvas.coords(b)[1] for b in bg_ids])
             canvas.coords(bg_id, x_position, max_y - bg_height)
 
@@ -74,24 +73,26 @@ def scroll_background():
 
 # Start the scrolling background
 screen.register_shape("AIRPLANE.gif") 
-player = A.PlayerAirplane(position=(0, -150), velocity=(0, 0), shape="AIRPLANE.gif", health=3)
-
+p = PlayerAirplane((0, 0), (5, 5), "AIRPLANE.gif", 3, size=20)
+enemy = EnemyAirplane((0, 100), (0, 0), "AIRPLANE_4.gif", 3, size=20)
+# Create airplane turtle (should be drawn after the background)
 def game_loop():
-    player.move()  # Make the player move
+    p.update(target=enemy)
+    enemy.update(target=p)
     screen.update()  # Update the screen
     screen.ontimer(game_loop, FPS)  # Run the game loop at 30 FPS (33ms per frame)
 
 # Handle player controls
-screen.onkeypress(player.press_up, "Up")
-screen.onkeyrelease(player.release_up, "Up")
-screen.onkeypress(player.press_down, "Down")
-screen.onkeyrelease(player.release_down, "Down")
-screen.onkeypress(player.press_left, "Left")
-screen.onkeyrelease(player.release_left, "Left")
-screen.onkeypress(player.press_right, "Right")
-screen.onkeyrelease(player.release_right, "Right")
-screen.onkeypress(player.press_space, "space")
-screen.onkeyrelease(player.release_space, "space")
+screen.onkeypress(p.press_up, "Up")
+screen.onkeyrelease(p.release_up, "Up")
+screen.onkeypress(p.press_left, "Left")
+screen.onkeyrelease(p.release_left, "Left")
+screen.onkeypress(p.press_right, "Right")
+screen.onkeyrelease(p.release_right, "Right")
+screen.onkeypress(p.press_down, "Down")
+screen.onkeyrelease(p.release_down, "Down")
+screen.onkeypress(p.press_space, "space")
+screen.onkeyrelease(p.release_space, "space")
 screen.listen()
 
 # Start background scrolling and game loop
