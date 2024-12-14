@@ -46,12 +46,6 @@ def move_ball(index):
     xpos[index] += vx[index] * dt
     ypos[index] += vy[index] * dt
 
-    # Handle boundary collisions (reverse velocity when hitting walls)
-    # if abs(xpos[index]) > (SCREEN_WIDTH // 2 - ball_radius):
-    #     vx[index] = -vx[index]
-    # if abs(ypos[index]) > (SCREEN_HEIGHT // 2 - ball_radius):
-    #     vy[index] = -vy[index]
-
 
 # Function to set up the screen
 def setup_screen():

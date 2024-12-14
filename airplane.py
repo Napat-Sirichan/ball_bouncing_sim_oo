@@ -6,7 +6,7 @@ import time
 import math
 
 class Airplane:
-    def __init__(self, position: tuple[int, int], velocity: tuple[int, int], shape: str, health: int, size=20):
+    def __init__(self, position: tuple[int, int], velocity: tuple[int, int], shape: str, health: int, size=40):
         self.size = size
         self._shape = shape
         self._position = position
@@ -14,6 +14,7 @@ class Airplane:
         self._health = health
 
         self._turtle = turtle.Turtle()
+        self._turtle.penup()
         self._turtle.screen.register_shape(shape)
         self._turtle.shape(shape)
         self._turtle.penup()
@@ -76,9 +77,17 @@ class Airplane:
     def destroy(self):
         """Handle airplane destruction."""
         self._is_destroyed = True  # Set destroyed flag
-        self._turtle.hideturtle()
+        self._turtle.hideturtle()  # Hide the airplane turtle
+        self._turtle.clear()  # Remove any trail or line left by the airplane
+
+        # Handle the explosion sequence
         self._handle_explosion_step()
+
+        # Print out the message and ensure the screen is clean
         print(f"{self._shape} airplane destroyed!")
+        # Clear the screen and any lingering traces of the turtle
+        self._turtle.getscreen().update()  # Ensure screen is updated after destruction
+        self._explosion_turtle.clear()  # Clear any explosion remnants
 
     def _check_bullet_collision(self, bullet, target):
         """Check for bullet collision with target airplane."""
@@ -88,6 +97,9 @@ class Airplane:
 
     def _handle_explosion_step(self):
         """Handle each step of the explosion animation."""
+        self._explosion_turtle.penup()  # Make sure the explosion turtle does not leave a trail
+        self._turtle.clear()  # Clear any trails left by the main airplane turtle
+
         if self._explosion_frame < len(self._explosion_images):
             # Register and set the current frame's shape for the explosion
             self._explosion_turtle.screen.register_shape(self._explosion_images[self._explosion_frame])
@@ -101,6 +113,7 @@ class Airplane:
         else:
             # After the explosion sequence ends, hide the airplane and explosion turtle
             self._explosion_turtle.hideturtle()
+            self._turtle.hideturtle()  # Ensure the main airplane is hidden after explosion
 
     def add_bullet(self, bullet: 'Bullet'):
         """Add a bullet to the active bullets list."""
@@ -266,12 +279,15 @@ class EnemyAirplane(Airplane):
         """Move the enemy airplane downward."""
         new_x, new_y = self.x, self.y - ENEMY_SPEED  # Move downward
         if new_y < -SCREEN_HEIGHT / 2 + self.size:
-            self.destroy()  # Reset to the top slightly inside the screen
-        self.position = (new_x, new_y)
-        print(f"Enemy position: {new_x}, {new_y}")  # Debugging line to check movement
+            self.position = (new_x, SCREEN_HEIGHT / 2 - self.size)  # Reset to the top
+        else:
+            self.position = (new_x, new_y)
 
     def handle_shooting(self, target):
-        """Handle enemy shooting logic."""
+        """Handle enemy shooting logic only if the enemy is not destroyed."""
+        if self._is_destroyed:  # If the enemy is destroyed, stop shooting
+            return
+
         current_time = time.time()
         if current_time - self.last_shot_time > self.shot_cooldown:
             self.last_shot_time = current_time
@@ -279,7 +295,7 @@ class EnemyAirplane(Airplane):
             dx = target.x - self.x
             dy = target.y - self.y
             angle = math.atan2(dy, dx)
-            vx = 0  # math.cos(angle) * 10  # Bullet speed in x
+            vx = 0  # Bullet speed in x
             vy = -5  # Bullet speed in y
             bullet = Bullet(
                 x=self.x,
@@ -292,13 +308,19 @@ class EnemyAirplane(Airplane):
 
     def update(self, target):
         """Update the enemy airplane and handle collisions."""
-        self.move_enemy_airplane()
-        self.update_bullets(target)
-        self.handle_shooting(target)  # Implement enemy shooting logic
+        if not self._is_destroyed:  # Only update movement and shooting if the airplane is not destroyed
+            self.move_enemy_airplane()
+            self.update_bullets(target)
+            self.handle_shooting(target)  # Implement enemy shooting logic
+        else:
+            # Remove the bullets associated with this destroyed enemy
+            self.remove_bullets()
+            # Even when destroyed, update bullets so they keep moving
+            self.update_bullets(target)
 
     def update_bullets(self, target):
         """Update all active bullets and handle collisions."""
-        for bullet in self._bullets:
+        for bullet in self._bullets[:]:  # Iterate over a copy to allow removal
             bullet.move()
             if bullet.is_off_screen():
                 bullet.hide_bullet()
@@ -319,51 +341,11 @@ class EnemyAirplane(Airplane):
         bullet.hide_bullet()  # Hide the bullet
         self._bullets.remove(bullet)  # Remove bullet from the list
 
-    
-# import time
+    def remove_bullets(self):
+        """Remove all bullets associated with this enemy when destroyed."""
+        for bullet in self._bullets:
+            bullet.hide_bullet()  # Hide bullet from the screen
+        self._bullets.clear()  # Clear the list of bullets
 
-# def game_loop():
-#     # Move and update player and enemy airplanes
-#     p.move_airplane_directional()
-#     p.update(target=enemy)
-#     #enemy.update(target=p)
 
-#     # Update screen once all game logic has been processed
-#     turtle.update()
-    
-#     # Keep the frame rate consistent (60 FPS)
-#     screen.ontimer(game_loop, 16)
 
-# # Initialize the screen
-# screen = turtle.Screen()
-# screen.title("Airplane and Ball Shooting")
-# screen.bgcolor("skyblue")
-# screen.setup(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
-# screen.register_shape("AIRPLANE.gif")  # Register the airplane shape
-# screen.register_shape("AIRPLANE_4.gif")  # Register the enemy airplane shape
-# turtle.tracer(0)  # Disable auto-screen updates for manual control
-# turtle.hideturtle()  # Hide the main turtle cursor to avoid distractions
-
-# # Initialize player airplane
-# p = PlayerAirplane((0, 0), (5, 5), "AIRPLANE.gif", 3, size=20)
-# enemy = EnemyAirplane((0, 100), (0, 0), "AIRPLANE_4.gif", 3, size=20)
-
-# # Setup key bindings
-# screen.onkeypress(p.press_up, "Up")
-# screen.onkeyrelease(p.release_up, "Up")
-# screen.onkeypress(p.press_left, "Left")
-# screen.onkeyrelease(p.release_left, "Left")
-# screen.onkeypress(p.press_right, "Right")
-# screen.onkeyrelease(p.release_right, "Right")
-# screen.onkeypress(p.press_down, "Down")
-# screen.onkeyrelease(p.release_down, "Down")
-# screen.onkeypress(p.press_space, "space")
-# screen.onkeyrelease(p.release_space, "space")
-
-# screen.listen()  # Start listening to key presses
-
-# # Start the game loop
-# game_loop()
-
-# # Keep the window open
-# screen.mainloop()

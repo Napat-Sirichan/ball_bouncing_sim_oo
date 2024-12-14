@@ -1,9 +1,12 @@
 import turtle
 import tkinter as tk
-from const import *  # Make sure SCREEN_WIDTH, SCREEN_HEIGHT, BG_IMAGE_PATHS are defined here
+import random
+import time
+from const import *  # Ensure SCREEN_WIDTH, SCREEN_HEIGHT, BG_IMAGE_PATHS are defined here
 from airplane import *
 
 SCROLL_SPEED = 6  # Adjust scroll speed to a smoother rate
+FPS = 16  # 30 FPS for the game loop (33ms per frame)
 
 # Step 1: Create the main screen and show loading
 screen = turtle.Screen()
@@ -57,7 +60,7 @@ for i in range(len(bg_images)):
     bg_ids.append(bg_id)
 
 def scroll_background():
-    # Loop over each background image
+    """Move the background images down smoothly."""
     for bg_id in bg_ids:
         # Move the background down smoothly
         canvas.move(bg_id, 0, SCROLL_SPEED)
@@ -71,14 +74,39 @@ def scroll_background():
     screen.update()  # Update the screen
     screen.ontimer(scroll_background, FPS)  # Set the timer for 30 FPS (33ms per frame)
 
-# Start the scrolling background
-screen.register_shape("AIRPLANE.gif") 
-p = PlayerAirplane((0, 0), (5, 5), "AIRPLANE.gif", 3, size=20)
-enemy = EnemyAirplane((0, 100), (0, 0), "AIRPLANE_4.gif", 3, size=20)
+def spawn_enemy():
+    """Spawn a new enemy airplane with a random shape."""
+    shapes = ["AIRPLANE_2.gif", "AIRPLANE_3.gif", "AIRPLANE_4.gif", "AIRPLANE_5.gif"]
+    random_shape = random.choice(shapes)
+    x_position = random.randint(-SCREEN_WIDTH//2 + 50, SCREEN_WIDTH//2 - 50)  # Random x position within screen width
+    y_position = SCREEN_HEIGHT // 2 - 50  # Start from top of the screen
+
+    new_enemy = EnemyAirplane((x_position, y_position), (0, 0), random_shape, 3, size=40)
+    return new_enemy
+
+# Initialize player airplane
+screen.register_shape("AIRPLANE.gif")
+p = PlayerAirplane((0, 0), (5, 5), "AIRPLANE.gif", 3, size=40)
+
+# Create a list to hold the enemies
+enemies = [spawn_enemy()]
+
 # Create airplane turtle (should be drawn after the background)
 def game_loop():
-    p.update(target=enemy)
-    enemy.update(target=p)
+    # Update the player and all enemies
+    p.update(target=enemies[0])
+    
+    for enemy in enemies[:]:  # Iterate over a copy of the list to avoid modification during iteration
+        enemy.update(target=p)
+        
+        # If an enemy is destroyed, remove it from the list
+        if enemy._is_destroyed:
+            enemies.remove(enemy)
+    
+    # If there are no enemies left, spawn a new one
+    if not enemies:
+        enemies.append(spawn_enemy())
+
     screen.update()  # Update the screen
     screen.ontimer(game_loop, FPS)  # Run the game loop at 30 FPS (33ms per frame)
 
