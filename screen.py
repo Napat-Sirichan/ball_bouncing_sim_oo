@@ -9,20 +9,20 @@ from mystery import *
 screen = turtle.Screen()
 screen.setup(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
 screen.title("Loading Screen")
-screen.bgcolor("#000000")
+screen.bgcolor(BLACK)
 screen.tracer(0)
 loading_turtle = turtle.Turtle()
 loading_turtle.hideturtle()
 loading_turtle.penup()
-loading_turtle.color("white")
+loading_turtle.color(WHITE)
 loading_turtle.goto(0, 0)
 loading_turtle.write("Loading... Please enter your username", align="center", font=("Arial", 16, "normal"))
 screen.update()
 username = screen.textinput("Login", "Please enter your username:")
 loading_turtle.clear()
 screen.clear()  
-screen.title("Seamless Scrolling Background with Two Images")
-screen.bgcolor("#3696d5")
+screen.title("Airplane Shooting Game")
+screen.bgcolor(SKYBLUE)
 screen.tracer(0) 
 canvas = screen.getcanvas()
 
@@ -66,7 +66,7 @@ def spawn_mystery_ball():
 
 def spawn_enemy():
     """Spawn a new enemy airplane with a random shape."""
-    shapes = ["AIRPLANE_2.gif", "AIRPLANE_3.gif", "AIRPLANE_4.gif", "AIRPLANE_5.gif"]
+    shapes = ENEMY_PIC
     random_shape = random.choice(shapes)
     
     while True:
@@ -82,8 +82,8 @@ def spawn_enemy():
             new_enemy = EnemyAirplane((x_position, y_position), (0, 0), random_shape, 3, size=40)
             return new_enemy
 
-screen.register_shape("AIRPLANE.gif")
-p = PlayerAirplane((0, 0), (5, 5), "AIRPLANE.gif", 3, size=40)
+screen.register_shape(PLAYER_PIC)
+p = PlayerAirplane((0, 0), (5, 5), PLAYER_PIC, 3, size=40)
 
 enemies = []
 mystery_balls = []
