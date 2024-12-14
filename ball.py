@@ -1,126 +1,119 @@
-# ball.py
 import turtle
 import math
-import time
-from const import SCREEN_WIDTH, SCREEN_HEIGHT, ORANGE, RED
 
 class Ball:
-    def __init__(self, position: tuple[int, int], velocity: tuple[int, int], shape: str, color: str, health: int, size=20):
-        """
-        Initialize a Ball object.
-
-        Args:
-            position (tuple[int, int]): (x, y) position of the ball.
-            velocity (tuple[int, int]): (vx, vy) velocity of the ball.
-            shape (str): Shape of the turtle.
-            color (str): Color of the ball.
-            health (int): Health points of the ball.
-            size (int, optional): Size of the ball. Defaults to 20.
-        """
+    def __init__(self, size, x, y, vx, vy, color):
         self.size = size
-        self.position = position
-        self.velocity = velocity
-        self.shape = shape
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
         self.color = color
-        self.health = health
-
-        # Initialize turtle for the ball
+        self.mass = 100 * size ** 2
+        self.count = 0
+        self.canvas_width = turtle.screensize()[0]
+        self.canvas_height = turtle.screensize()[1]
         self.turtle = turtle.Turtle()
-        self.turtle.shape("circle")
-        self.turtle.color(color)
-        self.turtle.penup()
-        self.turtle.goto(self.position)
-        self.turtle.shapesize(stretch_wid=self.size / 10, stretch_len=self.size / 10)
-        self.turtle.showturtle()
 
-        # List to hold active bullets (if applicable)
-        self.bullets = []
+    def bounce_off_vertical_wall(self):
+        self.vx = -self.vx
+        self.count += 1
 
-    def move(self):
-        """Update the position of the ball based on its velocity."""
-        new_x = self.position[0] + self.velocity[0]
-        new_y = self.position[1] + self.velocity[1]
-        self.position = (new_x, new_y)
-        self.turtle.goto(self.position)
+    def bounce_off_horizontal_wall(self):
+        self.vy = -self.vy
+        self.count += 1
 
-    def draw(self):
-        """Draw the ball on the screen."""
-        self.turtle.goto(self.position)
-        self.turtle.showturtle()
+    def bounce_off(self, that):
+        dx = that.x - self.x
+        dy = that.y - self.y
+        dvx = that.vx - self.vx
+        dvy = that.vy - self.vy
+        dvdr = dx * dvx + dy * dvy  # dv dot dr
+        dist = self.size + that.size  # distance between particle centers at collision
 
-    def take_damage(self, amount: int):
-        """Reduce the health of the ball."""
-        self.health -= amount
-        if self.health <= 0:
-            self.destroy()
+        # magnitude of normal force
+        magnitude = 2 * self.mass * that.mass * dvdr / ((self.mass + that.mass) * dist)
 
-    def destroy(self):
-        """Handle ball destruction."""
-        self.turtle.hideturtle()
-        print(f"{self.shape} object destroyed at position {self.position}!")
-        # Trigger explosion animation if needed
-        self.explosion(self.position[0], self.position[1])
-        self.respawn()
+        # normal force, and in x and y directions
+        fx = magnitude * dx / dist
+        fy = magnitude * dy / dist
 
-    def explosion(self, x, y):
-        """Display explosion animation at (x, y)."""
-        explosion_turtle = turtle.Turtle()
-        explosion_turtle.hideturtle()
-        explosion_turtle.penup()
-        explosion_turtle.goto(x, y)
-        explosion_turtle.shape("circle")
-        explosion_turtle.color("red")
-        explosion_turtle.shapesize(stretch_wid=2, stretch_len=2)
-        explosion_turtle.showturtle()
+        # update velocities according to normal force
+        self.vx += fx / self.mass
+        self.vy += fy / self.mass
+        that.vx -= fx / that.mass
+        that.vy -= fy / that.mass
 
-        # Simple fade-out effect
-        for i in range(5):
-            explosion_turtle.shapesize(stretch_wid=2 + i, stretch_len=2 + i)
-            explosion_turtle.color("red", "yellow")  # Change color for effect
-            time.sleep(0.05)  # Short delay
-        explosion_turtle.hideturtle()
+        # update collision counts
+        self.count += 1
+        that.count += 1
 
-    def add_bullet(self, bullet):
-        """Add a bullet to the active bullets list."""
-        self.bullets.append(bullet)
+    def distance(self, that):
+        x1 = self.x
+        y1 = self.y
+        x2 = that.x
+        y2 = that.y
+        d = math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
+        return d
 
-    def update_bullets(self, target, update_score_callback=None):
-        """
-        Update all active bullets.
+    def time_to_hit(self, that):
+        if self is that:
+            return math.inf
+        dx = that.x - self.x
+        dy = that.y - self.y
+        dvx = that.vx - self.vx
+        dvy = that.vy - self.vy
+        dvdr = dx * dvx + dy * dvy
+        if dvdr > 0:
+            return math.inf
+        dvdv = dvx * dvx + dvy * dvy
+        if dvdv == 0:
+            return math.inf
+        drdr = dx * dx + dy * dy
+        sigma = self.size + that.size
+        d = (dvdr * dvdr) - dvdv * (drdr - sigma * sigma)
+        if d < 0:
+            return math.inf
+        t = -(dvdr + math.sqrt(d)) / dvdv
 
-        Args:
-            target (Ball): The target ball to check collisions with.
-            update_score_callback (function, optional): Callback function to update the score. Defaults to None.
-        """
-        for bullet in self.bullets[:]:  # Iterate over a copy to allow removal
-            bullet.move()
-            if check_collision(bullet, target):
-                bullet.hide_bullet()
-                self.bullets.remove(bullet)
-                target.take_damage(1)  # Assuming target has take_damage
-                handle_explosion(target.x, target.y)
-                if update_score_callback and self.color == ORANGE:  # Assuming ORANGE is PLAYER
-                    update_score_callback(10)
-                if self.color == ORANGE:  # If player destroyed enemy
-                    target.respawn()
-            else:
-                # Check if bullet is off-screen
-                if bullet.is_off_screen(SCREEN_WIDTH, SCREEN_HEIGHT):
-                    bullet.hide_bullet()
-                    self.bullets.remove(bullet)
+        if t <= 0:
+            return math.inf
 
-    def draw_bullets(self):
-        """Draw all active bullets."""
-        for bullet in self.bullets:
-            bullet.draw()
+        return t
 
-    def respawn(self):
-        """Respawn the ball at initial position or designated respawn point."""
-        # To be implemented based on specific game logic
-        pass
+    def time_to_hit_vertical_wall(self):
+        if self.vx > 0:
+            return (self.canvas_width - self.x - self.size) / self.vx
+        elif self.vx < 0:
+            return (self.canvas_width + self.x - self.size) / (-self.vx)
+        else:
+            return math.inf
 
-# Utility function for collision
-def check_collision(obj1, obj2):
-    """Check if two objects have collided."""
-    distance = math.sqrt((obj1.x - obj2.x)**2 + (obj1.y - obj2.y)**2)
-    return distance < (obj1.size + obj2.size)
+    def time_to_hit_horizontal_wall(self):
+        if self.vy > 0:
+            return (self.canvas_height - self.y - self.size) / self.vy
+        elif self.vy < 0:
+            return (self.canvas_height + self.y - self.size) / (-self.vy)
+        else:
+            return math.inf
+
+    def time_to_hit_paddle(self, paddle):
+        if (self.vy > 0) and ((self.y + self.size) > (paddle.location[1] - paddle.height / 2)):
+            return math.inf
+        if (self.vy < 0) and ((self.y - self.size) < (paddle.location[1] + paddle.height / 2)):
+            return math.inf
+
+        dt = (math.sqrt((paddle.location[1] - self.y) ** 2) - self.size - paddle.height / 2) / abs(self.vy)
+        paddle_left_edge = paddle.location[0] - paddle.width / 2
+        paddle_right_edge = paddle.location[0] + paddle.width / 2
+        if paddle_left_edge - self.size <= self.x + (self.vx * dt) <= paddle_right_edge + self.size:
+            return dt
+        else:
+            return math.inf
+
+    def bounce_off_paddle(self):
+        self.vy = -self.vy
+        self.count += 1
+
+    def __str__(self):
+        return str(self.x) + ":" + str(self.y) + ":" + str(self.vx) + ":" + str(self.vy) + ":" + str(self.count)
