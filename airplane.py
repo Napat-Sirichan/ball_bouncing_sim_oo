@@ -82,6 +82,9 @@ class Airplane:
         self._turtle.hideturtle()  # Hide the airplane turtle
         self._turtle.clear()  # Remove any trail or line left by the airplane
 
+        # Remove all bullets associated with this enemy
+        self.remove_bullets()
+
         # Handle the explosion sequence
         self._handle_explosion_step()
 
@@ -90,6 +93,7 @@ class Airplane:
         # Clear the screen and any lingering traces of the turtle
         self._turtle.getscreen().update()  # Ensure screen is updated after destruction
         self._explosion_turtle.clear()  # Clear any explosion remnants
+
 
     def _check_bullet_collision(self, bullet, target):
         """Check for bullet collision with target airplane."""
@@ -146,6 +150,12 @@ class Airplane:
         """Draw all active bullets."""
         for bullet in self._bullets:
             bullet.turtle.showturtle()
+
+    def remove_bullets(self):
+        """Remove all bullets associated with this enemy when destroyed."""
+        for bullet in self._bullets:
+            bullet.hide_bullet()  # Hide bullet from the screen
+        self._bullets.clear()  # Clear the list of bullets
 
 
 class PlayerAirplane(Airplane):
@@ -284,72 +294,109 @@ class EnemyAirplane(Airplane):
     def __init__(self, position, velocity, shape, health, size=20):
         super().__init__(position, velocity, shape, health, size)
         self.last_shot_time = 0
-        self.shot_cooldown = 1.0  # Enemy shoots every 1 second
+        self.shot_cooldown = 1.0  # Default shooting cooldown
+        self.max_bullets = 5  # Max bullets for AIRPLANE_4 behavior
+        self.bullet_count = 0  # Track how many bullets have been shot
 
     def move_enemy_airplane(self):
         """Move the enemy airplane downward."""
         new_x, new_y = self.x, self.y - ENEMY_SPEED  # Move downward
         if new_y < -SCREEN_HEIGHT / 2 + self.size:
-            self.position = (new_x, SCREEN_HEIGHT / 2 -
-                             self.size)  # Reset to the top
+            self.position = (new_x, SCREEN_HEIGHT / 2 - self.size)  # Reset to the top
         else:
             self.position = (new_x, new_y)
 
     def handle_shooting(self, target):
-        """Handle enemy shooting logic only if the enemy is not destroyed."""
+        """Handle enemy shooting logic based on airplane type."""
         if self._is_destroyed:  # If the enemy is destroyed, stop shooting
             return
 
         current_time = time.time()
+
+        if self.shape == "AIRPLANE_2.gif":
+            self.shoot_normal(current_time)
+        elif self.shape == "AIRPLANE_3.gif":
+            self.shoot_tri_directional(current_time)
+        elif self.shape == "AIRPLANE_4.gif":
+            self.shoot_with_limit(current_time)
+        elif self.shape == "AIRPLANE_5.gif":
+            self.shoot_fast(current_time)
+
+    def shoot_normal(self, current_time):
+        """Shoot normally (one bullet at a time)."""
         if current_time - self.last_shot_time > self.shot_cooldown:
             self.last_shot_time = current_time
-            # Create a bullet aimed at the player's current position
-            dx = target.x - self.x
-            dy = target.y - self.y
-            angle = math.atan2(dy, dx)
-            vx = 0  # Bullet speed in x
-            vy = -5  # Bullet speed in y
             bullet = Bullet(
                 x=self.x,
                 y=self.y - self.size - 5,  # Slightly below the enemy
-                vx=vx,
-                vy=vy,
+                vx=0,
+                vy=-5,  # Bullet speed in y
                 owner=ENEMY
             )
             self.add_bullet(bullet)
 
-    def destroy(self):
-        """Handle enemy destruction, including removing all its bullets."""
-        self._is_destroyed = True
-        self._turtle.hideturtle()  # Hide the enemy airplane turtle
-        self._turtle.clear()  # Remove any trail or line left by the airplane
+    def shoot_tri_directional(self, current_time):
+        """Shoot bullets in a tri-directional spread."""
+        if current_time - self.last_shot_time > self.shot_cooldown:
+            self.last_shot_time = current_time
+            angles = [-100, -90, -80]  # Three directions: left, center, right (downward spread)
+            for angle in angles:
+                dx = math.cos(math.radians(angle)) * 5  # Horizontal movement (left/right)
+                dy = math.sin(math.radians(angle)) * 5  # Vertical movement (downward)
+                bullet = Bullet(
+                    x=self.x,
+                    y=self.y - self.size - 5,  # Slightly below the enemy
+                    vx=dx,
+                    vy=dy,
+                    owner=ENEMY
+                )
+                self.add_bullet(bullet)
 
-        # Remove all bullets associated with this enemy
-        for bullet in self._bullets[:]:
-            bullet.hide_bullet()  # Hide the bullet
-            self._bullets.remove(bullet)  # Remove the bullet from the list
 
-        # Handle the explosion sequence
-        self._handle_explosion_step()
 
-        # Print out the message and ensure the screen is clean
-        print(f"{self._shape} airplane destroyed!")
-        self._turtle.getscreen().update()  # Ensure screen is updated after destruction
-        self._explosion_turtle.clear()  # Clear any explosion remnants
+    def shoot_with_limit(self, current_time):
+        """Shoot with a limit of 5 bullets. If there are more, remove the oldest bullet."""
+        if len(self._bullets) >= self.max_bullets:
+            self._bullets[0].hide_bullet()  # Hide the first bullet if exceeding max
+            self._bullets.pop(0)  # Remove it from the list
+
+        if current_time - self.last_shot_time > self.shot_cooldown:
+            self.last_shot_time = current_time
+            bullet = Bullet(
+                x=self.x,
+                y=self.y - self.size - 5,  # Slightly below the enemy
+                vx=0,
+                vy=-5,  # Bullet speed in y
+                owner=ENEMY
+            )
+            self.add_bullet(bullet)
+
+    def shoot_fast(self, current_time):
+        """Shoot fast with a cooldown of 0.2 seconds."""
+        if current_time - self.last_shot_time > 0.5:  # Fast shooting
+            self.last_shot_time = current_time
+            bullet = Bullet(
+                x=self.x,
+                y=self.y - self.size - 5,  # Slightly below the enemy
+                vx=0,
+                vy=-5,  # Bullet speed in y
+                owner=ENEMY
+            )
+            self.add_bullet(bullet)
 
     def update(self, target):
         """Update the enemy airplane and handle collisions."""
         if not self._is_destroyed:  # Only update movement and shooting if the airplane is not destroyed
             self.move_enemy_airplane()
             self.update_bullets(target)
-            self.handle_shooting(target)
+            self.handle_shooting(target)  # Implement enemy shooting logic
         else:
             # Even when destroyed, update bullets so they keep moving
             self.update_bullets(target)
 
     def update_bullets(self, target):
         """Update all active bullets and handle collisions."""
-        for bullet in self._bullets[:]:  # Iterate over a copy of the list to avoid modification during iteration
+        for bullet in self._bullets[:]:  # Iterate over a copy to allow removal
             bullet.move()
             if bullet.is_off_screen():
                 bullet.hide_bullet()
@@ -368,10 +415,11 @@ class EnemyAirplane(Airplane):
         """Handle the effect of a bullet collision."""
         target.take_damage(10)  # Reduce the health of the target
         bullet.hide_bullet()  # Hide the bullet
-        self._bullets.remove(bullet)  # Remove bullet from the li
+        self._bullets.remove(bullet)  # Remove bullet from the list
 
     def remove_bullets(self):
         """Remove all bullets associated with this enemy when destroyed."""
         for bullet in self._bullets:
             bullet.hide_bullet()  # Hide bullet from the screen
         self._bullets.clear()  # Clear the list of bullets
+

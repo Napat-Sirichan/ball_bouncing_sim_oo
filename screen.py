@@ -78,11 +78,25 @@ def spawn_enemy():
     """Spawn a new enemy airplane with a random shape."""
     shapes = ["AIRPLANE_2.gif", "AIRPLANE_3.gif", "AIRPLANE_4.gif", "AIRPLANE_5.gif"]
     random_shape = random.choice(shapes)
-    x_position = random.randint(-SCREEN_WIDTH//2 + 50, SCREEN_WIDTH//2 - 50)  # Random x position within screen width
-    y_position = SCREEN_HEIGHT // 2 - 50  # Start from top of the screen
+    
+    # Loop until a valid, non-overlapping position is found
+    while True:
+        x_position = random.randint(-SCREEN_WIDTH//2 + 50, SCREEN_WIDTH//2 - 50)  # Random x position within screen width
+        y_position = SCREEN_HEIGHT // 2 - 50  # Start from top of the screen
+        
+        # Check if this position overlaps with existing enemies
+        overlap = False
+        for enemy in enemies:
+            # Check distance between current position and each existing enemy
+            if abs(x_position - enemy.x) < enemy.size * 2 and abs(y_position - enemy.y) < enemy.size * 2:
+                overlap = True
+                break
+        
+        # If no overlap, break the loop and return the new enemy
+        if not overlap:
+            new_enemy = EnemyAirplane((x_position, y_position), (0, 0), random_shape, 3, size=40)
+            return new_enemy
 
-    new_enemy = EnemyAirplane((x_position, y_position), (0, 0), random_shape, 3, size=40)
-    return new_enemy
 
 # Initialize player airplane
 screen.register_shape("AIRPLANE.gif")
