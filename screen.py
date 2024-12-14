@@ -89,26 +89,33 @@ screen.register_shape("AIRPLANE.gif")
 p = PlayerAirplane((0, 0), (5, 5), "AIRPLANE.gif", 3, size=40)
 
 # Create a list to hold the enemies
-enemies = [spawn_enemy()]
+enemies = []
+
+for _ in range(random.randint(1, 3)):
+    enemies.append(spawn_enemy())
+
 
 # Create airplane turtle (should be drawn after the background)
 def game_loop():
-    # Update the player and all enemies
-    p.update(target=enemies[0])
+    # Update the player airplane
+    p.update(target=enemies)  # Pass the whole list of enemies to check for collisions
     
+    # Update all enemies
     for enemy in enemies[:]:  # Iterate over a copy of the list to avoid modification during iteration
         enemy.update(target=p)
-        
+
         # If an enemy is destroyed, remove it from the list
         if enemy._is_destroyed:
             enemies.remove(enemy)
-    
+
     # If there are no enemies left, spawn a new one
     if not enemies:
-        enemies.append(spawn_enemy())
+        for _ in range(random.randint(1, 3)):  # Randomly spawn 1 to 3 new enemies
+            enemies.append(spawn_enemy())
 
     screen.update()  # Update the screen
     screen.ontimer(game_loop, FPS)  # Run the game loop at 30 FPS (33ms per frame)
+
 
 # Handle player controls
 screen.onkeypress(p.press_up, "Up")

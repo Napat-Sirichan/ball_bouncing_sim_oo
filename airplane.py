@@ -5,6 +5,7 @@ from bullet import *
 import time
 import math
 
+
 class Airplane:
     def __init__(self, position: tuple[int, int], velocity: tuple[int, int], shape: str, health: int, size=40):
         self.size = size
@@ -24,7 +25,8 @@ class Airplane:
         self._bullets = []
 
         # Explosion-related variables
-        self._explosion_images = ["EXPLOSION_1.gif", "EXPLOSION_2.gif", "EXPLOSION_3.gif", "EXPLOSION_4.gif"]
+        self._explosion_images = [
+            "EXPLOSION_1.gif", "EXPLOSION_2.gif", "EXPLOSION_3.gif", "EXPLOSION_4.gif"]
         self._explosion_frame = 0
         self._is_destroyed = False  # Flag to check if the airplane is destroyed
 
@@ -32,7 +34,7 @@ class Airplane:
         self._explosion_turtle = turtle.Turtle()
         self._explosion_turtle.hideturtle()
 
-    @property 
+    @property
     def position(self):
         return self._position
 
@@ -52,7 +54,7 @@ class Airplane:
     @property
     def shape(self):
         return self._shape
-    
+
     @shape.setter
     def shape(self, other):
         self._turtle.register_shape(other)
@@ -102,14 +104,18 @@ class Airplane:
 
         if self._explosion_frame < len(self._explosion_images):
             # Register and set the current frame's shape for the explosion
-            self._explosion_turtle.screen.register_shape(self._explosion_images[self._explosion_frame])
-            self._explosion_turtle.shape(self._explosion_images[self._explosion_frame])
-            self._explosion_turtle.goto(self._position)  # Position explosion at airplane's location
+            self._explosion_turtle.screen.register_shape(
+                self._explosion_images[self._explosion_frame])
+            self._explosion_turtle.shape(
+                self._explosion_images[self._explosion_frame])
+            # Position explosion at airplane's location
+            self._explosion_turtle.goto(self._position)
             self._explosion_turtle.showturtle()
             self._explosion_frame += 1
 
             # Schedule the next frame after 200ms
-            self._explosion_turtle.screen.ontimer(self._handle_explosion_step, 200)
+            self._explosion_turtle.screen.ontimer(
+                self._handle_explosion_step, 200)
         else:
             # After the explosion sequence ends, hide the airplane and explosion turtle
             self._explosion_turtle.hideturtle()
@@ -126,9 +132,9 @@ class Airplane:
             if self._check_bullet_collision(bullet, target):
                 bullet.hide_bullet()
                 self._bullets.remove(bullet)
-                target.take_damage(1) 
+                target.take_damage(1)
                 # Update score
-                #self.update_score(10)
+                # self.update_score(10)
                 if self.owner == PLAYER:
                     target.respawn()
             else:
@@ -141,6 +147,7 @@ class Airplane:
         for bullet in self._bullets:
             bullet.turtle.showturtle()
 
+
 class PlayerAirplane(Airplane):
     def __init__(self, position, velocity, shape, health, size=20):
         super().__init__(position, velocity, shape, health, size)
@@ -149,7 +156,7 @@ class PlayerAirplane(Airplane):
         self._is_right_pressed = False
         self._is_down_pressed = False
         self._is_space_pressed = False
-        
+
         self._turtle.penup()  # ยกปากกา
         self._turtle.goto(self._position)  # ย้ายเครื่องบินไปตำแหน่งที่กำหนด
         self._turtle.showturtle()  # แสดงเต่า
@@ -198,31 +205,31 @@ class PlayerAirplane(Airplane):
         dx, dy = 0, 0
 
         # Diagonal Up-Left
-        if self._is_up_pressed and self._is_left_pressed and self.y < SCREEN_HEIGHT /2 - self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
+        if self._is_up_pressed and self._is_left_pressed and self.y < SCREEN_HEIGHT / 2 - self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
             dy += PLAYER_SPEED
             dx -= PLAYER_SPEED
 
         # Diagonal Up-Right
-        if self._is_up_pressed and self._is_right_pressed and self.y < SCREEN_HEIGHT /2 - self.size and self.x < SCREEN_WIDTH / 2 - self.size:
+        if self._is_up_pressed and self._is_right_pressed and self.y < SCREEN_HEIGHT / 2 - self.size and self.x < SCREEN_WIDTH / 2 - self.size:
             dy += PLAYER_SPEED
             dx += PLAYER_SPEED
 
         # Diagonal Down-Left
-        if self._is_down_pressed and self._is_left_pressed and self.y > -SCREEN_HEIGHT /2 + self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
+        if self._is_down_pressed and self._is_left_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
             dy -= PLAYER_SPEED
             dx -= PLAYER_SPEED
 
         # Diagonal Down-Right
-        if self._is_down_pressed and self._is_right_pressed and self.y > -SCREEN_HEIGHT /2 + self.size and self.x < SCREEN_WIDTH / 2 - self.size:
+        if self._is_down_pressed and self._is_right_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size and self.x < SCREEN_WIDTH / 2 - self.size:
             dy -= PLAYER_SPEED
             dx += PLAYER_SPEED
 
         # Move up
-        if self._is_up_pressed and self.y < SCREEN_HEIGHT /2 - self.size:
+        if self._is_up_pressed and self.y < SCREEN_HEIGHT / 2 - self.size:
             dy += PLAYER_SPEED
 
         # Move down
-        if self._is_down_pressed and self.y > -SCREEN_HEIGHT /2 + self.size:
+        if self._is_down_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size:
             dy -= PLAYER_SPEED
 
         # Move left
@@ -237,7 +244,7 @@ class PlayerAirplane(Airplane):
         new_y = self.y + dy
 
         # Update position if within boundaries
-        if -SCREEN_WIDTH / 2 + self.size < new_x < SCREEN_WIDTH / 2 - self.size and -SCREEN_HEIGHT /2 + self.size < new_y < SCREEN_HEIGHT /2 - self.size:
+        if -SCREEN_WIDTH / 2 + self.size < new_x < SCREEN_WIDTH / 2 - self.size and -SCREEN_HEIGHT / 2 + self.size < new_y < SCREEN_HEIGHT / 2 - self.size:
             self.position = (new_x, new_y)
 
         # Print the new position
@@ -245,29 +252,33 @@ class PlayerAirplane(Airplane):
 
         turtle.update()
 
-
-
     def update(self, target):
         """Update the airplane and its bullets."""
         self.move_airplane_directional()
         self.update_bullets(target)
 
-    def update_bullets(self, target):
-        """อัพเดตกระสุนทั้งหมดและตรวจสอบการชน"""
-        for bullet in self._bullets:
-            bullet.move()  # เคลื่อนที่กระสุน
+    def update_bullets(self, enemies):
+        """Update all active bullets and check for collision with all enemies."""
+        for bullet in self._bullets[:]:
+            bullet.move()  # Move the bullet
+
+            # Check collision with all enemies
+            for enemy in enemies:
+                if self._check_bullet_collision(bullet, enemy):
+                    self.handle_bullet_collision(bullet, enemy)
+                    break  # Stop checking further once the bullet hits an enemy
+
+            # If the bullet goes off screen, remove it
             if bullet.is_off_screen():
                 bullet.hide_bullet()
-                self._bullets.remove(bullet)  # ลบกระสุนที่ออกจากจอ
-            else:
-                if self._check_bullet_collision(bullet, target):
-                    self.handle_bullet_collision(bullet, target)
+                self._bullets.remove(bullet)
 
     def handle_bullet_collision(self, bullet, target):
         """Handle the effect of a bullet collision."""
         target.take_damage(10)  # Reduce the health of the target
         bullet.hide_bullet()  # Hide the bullet
         self._bullets.remove(bullet)  # Remove bullet from the list
+
 
 class EnemyAirplane(Airplane):
     def __init__(self, position, velocity, shape, health, size=20):
@@ -279,7 +290,8 @@ class EnemyAirplane(Airplane):
         """Move the enemy airplane downward."""
         new_x, new_y = self.x, self.y - ENEMY_SPEED  # Move downward
         if new_y < -SCREEN_HEIGHT / 2 + self.size:
-            self.position = (new_x, SCREEN_HEIGHT / 2 - self.size)  # Reset to the top
+            self.position = (new_x, SCREEN_HEIGHT / 2 -
+                             self.size)  # Reset to the top
         else:
             self.position = (new_x, new_y)
 
@@ -306,21 +318,38 @@ class EnemyAirplane(Airplane):
             )
             self.add_bullet(bullet)
 
+    def destroy(self):
+        """Handle enemy destruction, including removing all its bullets."""
+        self._is_destroyed = True
+        self._turtle.hideturtle()  # Hide the enemy airplane turtle
+        self._turtle.clear()  # Remove any trail or line left by the airplane
+
+        # Remove all bullets associated with this enemy
+        for bullet in self._bullets[:]:
+            bullet.hide_bullet()  # Hide the bullet
+            self._bullets.remove(bullet)  # Remove the bullet from the list
+
+        # Handle the explosion sequence
+        self._handle_explosion_step()
+
+        # Print out the message and ensure the screen is clean
+        print(f"{self._shape} airplane destroyed!")
+        self._turtle.getscreen().update()  # Ensure screen is updated after destruction
+        self._explosion_turtle.clear()  # Clear any explosion remnants
+
     def update(self, target):
         """Update the enemy airplane and handle collisions."""
         if not self._is_destroyed:  # Only update movement and shooting if the airplane is not destroyed
             self.move_enemy_airplane()
             self.update_bullets(target)
-            self.handle_shooting(target)  # Implement enemy shooting logic
+            self.handle_shooting(target)
         else:
-            # Remove the bullets associated with this destroyed enemy
-            self.remove_bullets()
             # Even when destroyed, update bullets so they keep moving
             self.update_bullets(target)
 
     def update_bullets(self, target):
         """Update all active bullets and handle collisions."""
-        for bullet in self._bullets[:]:  # Iterate over a copy to allow removal
+        for bullet in self._bullets[:]:  # Iterate over a copy of the list to avoid modification during iteration
             bullet.move()
             if bullet.is_off_screen():
                 bullet.hide_bullet()
@@ -339,13 +368,10 @@ class EnemyAirplane(Airplane):
         """Handle the effect of a bullet collision."""
         target.take_damage(10)  # Reduce the health of the target
         bullet.hide_bullet()  # Hide the bullet
-        self._bullets.remove(bullet)  # Remove bullet from the list
+        self._bullets.remove(bullet)  # Remove bullet from the li
 
     def remove_bullets(self):
         """Remove all bullets associated with this enemy when destroyed."""
         for bullet in self._bullets:
             bullet.hide_bullet()  # Hide bullet from the screen
         self._bullets.clear()  # Clear the list of bullets
-
-
-
