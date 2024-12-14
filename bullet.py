@@ -1,45 +1,36 @@
 # bullet.py
 import turtle
-import math
-import const
-from ball import Ball
+from const import *
+from utility import check_collision
 
-class Bullet(Ball):
-    def __init__(
-        self,
-        size=5,              # Smaller size for bullets
-        x=0,                 # Initial x-coordinate
-        y=0,                 # Initial y-coordinate
-        vx=0,                # Velocity in the x-direction
-        vy=10,               # Velocity in the y-direction (positive for upward)
-        color=const.ORANGE,  # Bullet color
-        id=0,                # Unique identifier
-        owner=const.PLAYER,  # Owner of the bullet
-    ):
-        """
-        Initialize a Bullet object inheriting from Ball.
-
-        Args:
-            size (int): Size of the bullet.
-            x (int): Initial x-coordinate.
-            y (int): Initial y-coordinate.
-            vx (int): Velocity in the x-direction.
-            vy (int): Velocity in the y-direction.
-            color (str): Color of the bullet.
-            id (int): Unique identifier.
-            owner (int): Identifier for the owner (e.g., PLAYER or ENEMY).
-        """
-        super().__init__(size, x, y, vx, vy, color, id)
+class Bullet:
+    def __init__(self, x, y, vx, vy, owner):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.size = 5
         self.owner = owner
+        self.color = ORANGE if owner == PLAYER else RED
 
-        # Customize the turtle for bullets
-        self._turtle.shape("triangle")  # Different shape for bullets
-        self._turtle.setheading(90)      # Point upwards by default
+        self.turtle = turtle.Turtle()
+        self.turtle.shape("circle")
+        self.turtle.color(self.color)
+        self.turtle.penup()
+        self.turtle.goto(self.x, self.y)
+        self.turtle.setheading(90 if owner == PLAYER else 270)
+        self.turtle.showturtle()
 
-    def update(self, dt):
-        """Update bullet position."""
-        self.move(dt)
+    def move(self):
+        """เคลื่อนที่ลูกกระสุนตามความเร็ว"""
+        self.x += self.vx
+        self.y += self.vy
+        self.turtle.goto(self.x, self.y)
 
     def hide_bullet(self):
-        """Hide the bullet's turtle."""
-        self.hide()
+        """ซ่อนลูกกระสุนจากหน้าจอ"""
+        self.turtle.hideturtle()
+
+    def is_off_screen(self, screen_width, screen_height):
+        """ตรวจสอบว่าลูกกระสุนออกนอกหน้าจอหรือไม่"""
+        return not (-screen_width/2 < self.x < screen_width/2 and -screen_height/2 < self.y < screen_height/2)

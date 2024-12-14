@@ -1,64 +1,25 @@
 # airplane.py
 import turtle
-import math  # Import math module
-import time  # Import time module for shooting cooldowns
-from const import * 
-from bullet import Bullet 
-from ball import Ball
+from const import *
+from bullet import Bullet
+from utility import check_collision
+import time
+import math
 
-# Initialize score
-score = 0
-
-# Create a turtle to display the score
-score_display = turtle.Turtle()
-score_display.hideturtle()
-score_display.penup()
-score_display.goto(-SCREEN_WIDTH / 2 + 20, SCREEN_HEIGHT / 2 - 40)
-score_display.color("black")
-score_display.write(f"Score: {score}", align="left", font=("Arial", 14, "normal"))
-
-def update_score(points):
-    """Update the player's score."""
-    global score
-    score += points
-    score_display.clear()
-    score_display.write(f"Score: {score}", align="left", font=("Arial", 14, "normal"))
-
-def handle_explosion(x, y):
-    """Handle explosion animation at (x, y)."""
-    explosion_turtle = turtle.Turtle()
-    explosion_turtle.hideturtle()
-    explosion_turtle.penup()
-    explosion_turtle.goto(x, y)
-    explosion_turtle.shape("circle")
-    explosion_turtle.color("red")
-    explosion_turtle.shapesize(stretch_wid=2, stretch_len=2)
-    explosion_turtle.showturtle()
-
-    # Simple fade-out effect
-    for i in range(5):
-        explosion_turtle.shapesize(stretch_wid=2 + i, stretch_len=2 + i)
-        explosion_turtle.color("red", "yellow")  # Change color for effect
-        time.sleep(0.05)  # Short delay
-    explosion_turtle.hideturtle()
 
 class Airplane:
     def __init__(self, position: tuple[int, int], velocity: tuple[int, int], shape: str, health: int, size=20):
-        self.size = size  # Added size attribute
+        self.size = size  
         self._position = position
         self._velocity = velocity
-        self._shape = shape
         self._health = health
 
-        # Initialize turtle for the airplane
         self._turtle = turtle.Turtle()
         self._turtle.shape(shape)
         self._turtle.penup()
         self._turtle.goto(self._position)
-        self._turtle.shapesize(stretch_wid=self.size / 10, stretch_len=self.size / 10)  # Adjust based on size
         self._turtle.showturtle()
 
-        # List to hold active bullets
         self._bullets = []
 
     @property 
@@ -95,7 +56,10 @@ class Airplane:
         """Handle airplane destruction."""
         self._turtle.hideturtle()
         print(f"{self._shape} airplane destroyed!")
-        # Optional: Trigger explosion animation here if allowed
+        # Trigger explosion animation
+        # handle_explosion(self.x, self.y)
+        # Optional: Respawn the airplane
+        self.respawn()
 
     def add_bullet(self, bullet: Bullet):
         """Add a bullet to the active bullets list."""
@@ -104,8 +68,8 @@ class Airplane:
     def update_bullets(self, target):
         """Update all active bullets."""
         for bullet in self._bullets[:]:  # Iterate over a copy to allow removal
-            bullet.update(0.1)  # dt = 0.1
-            if target is not None and bullet.check_collision(target):
+            bullet.move()
+            if check_collision(bullet, target):
                 bullet.hide_bullet()
                 self._bullets.remove(bullet)
                 target.take_damage(1)  # Assuming target has take_damage
@@ -113,17 +77,18 @@ class Airplane:
                 handle_explosion(target.x, target.y)
                 # Update score
                 update_score(10)
+                if self.owner == PLAYER:
+                    target.respawn()
             else:
                 # Check if bullet is off-screen
-                if not (-SCREEN_WIDTH / 2 < bullet.x < SCREEN_WIDTH / 2 and
-                        -SCREEN_HEIGHT / 2 < bullet.y < SCREEN_HEIGHT / 2):
+                if bullet.is_off_screen(SCREEN_WIDTH, SCREEN_HEIGHT):
                     bullet.hide_bullet()
                     self._bullets.remove(bullet)
 
     def draw_bullets(self):
         """Draw all active bullets."""
         for bullet in self._bullets:
-            bullet.draw()
+            bullet.turtle.showturtle()
 
 class PlayerAirplane(Airplane):
     def __init__(self, position, velocity, shape, health, size=20):
@@ -168,7 +133,8 @@ class PlayerAirplane(Airplane):
             bullet = Bullet(
                 x=self.x,
                 y=self.y + self.size + 5,  # Slightly above the airplane
-                vy=15,          # Upward velocity
+                vx=0,
+                vy=BULLET_SPEED,          # Upward velocity
                 owner=PLAYER
             )
             self.add_bullet(bullet)
@@ -177,45 +143,45 @@ class PlayerAirplane(Airplane):
     def release_space(self):
         self._is_space_pressed = False
 
-    def move_airplane(self):
+    def move_airplane_directional(self):
         """Update position based on keypresses."""
         dx, dy = 0, 0
 
         # Diagonal Up-Left
         if self._is_up_pressed and self._is_left_pressed and self.y < SCREEN_HEIGHT / 2 - self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
-            dy += 5
-            dx -= 5
+            dy += PLAYER_SPEED
+            dx -= PLAYER_SPEED
 
         # Diagonal Up-Right
         if self._is_up_pressed and self._is_right_pressed and self.y < SCREEN_HEIGHT / 2 - self.size and self.x < SCREEN_WIDTH / 2 - self.size:
-            dy += 5
-            dx += 5
+            dy += PLAYER_SPEED
+            dx += PLAYER_SPEED
 
         # Diagonal Down-Left
         if self._is_down_pressed and self._is_left_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size and self.x > -SCREEN_WIDTH / 2 + self.size:
-            dy -= 5
-            dx -= 5
+            dy -= PLAYER_SPEED
+            dx -= PLAYER_SPEED
 
         # Diagonal Down-Right
         if self._is_down_pressed and self._is_right_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size and self.x < SCREEN_WIDTH / 2 - self.size:
-            dy -= 5
-            dx += 5
+            dy -= PLAYER_SPEED
+            dx += PLAYER_SPEED
 
         # Move up
         if self._is_up_pressed and self.y < SCREEN_HEIGHT / 2 - self.size:
-            dy += 5
+            dy += PLAYER_SPEED
 
         # Move down
         if self._is_down_pressed and self.y > -SCREEN_HEIGHT / 2 + self.size:
-            dy -= 5
+            dy -= PLAYER_SPEED
 
         # Move left
         if self._is_left_pressed and self.x > -SCREEN_WIDTH / 2 + self.size:
-            dx -= 5
+            dx -= PLAYER_SPEED
 
         # Move right
         if self._is_right_pressed and self.x < SCREEN_WIDTH / 2 - self.size:
-            dx += 5
+            dx += PLAYER_SPEED
 
         new_x = self.x + dx
         new_y = self.y + dy
@@ -226,7 +192,7 @@ class PlayerAirplane(Airplane):
 
     def update(self, target):
         """Update the airplane and its bullets."""
-        self.move_airplane()
+        self.move_airplane_directional()
         self.update_bullets(target)
 
 class EnemyAirplane(Airplane):
@@ -237,7 +203,7 @@ class EnemyAirplane(Airplane):
 
     def move_enemy_airplane(self):
         """Move the enemy airplane downward."""
-        new_x, new_y = self.x, self.y - 2  # Move downward
+        new_x, new_y = self.x, self.y - ENEMY_SPEED  # Move downward
         if new_y < -SCREEN_HEIGHT / 2 + self.size:
             new_y = SCREEN_HEIGHT / 2 - self.size  # Reset to the top slightly inside the screen
         self.position = (new_x, new_y)
@@ -251,14 +217,13 @@ class EnemyAirplane(Airplane):
             dx = target.x - self.x
             dy = target.y - self.y
             angle = math.atan2(dy, dx)
-            vx = math.cos(angle) * 10  # Bullet speed
-            vy = math.sin(angle) * 10
+            vx = 0#math.cos(angle) * 10  # Bullet speed in x
+            vy = -5#math.sin(angle) * 10  # Bullet speed in y
             bullet = Bullet(
                 x=self.x,
                 y=self.y - self.size - 5,  # Slightly below the enemy
                 vx=vx,
                 vy=vy,
-                color=RED,
                 owner=ENEMY
             )
             self.add_bullet(bullet)
@@ -268,69 +233,3 @@ class EnemyAirplane(Airplane):
         self.move_enemy_airplane()
         self.update_bullets(target)
         self.handle_shooting(target)  # Implement enemy shooting logic
-
-def setup_screen():
-    """Set up the game screen."""
-    screen = turtle.Screen()
-    screen.title("Airplane and Bullet Shooting")
-    screen.bgcolor(SKYBLUE)
-    screen.setup(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
-    screen.register_shape("AIRPLANE.gif")      # Ensure this file exists
-    screen.register_shape("AIRPLANE_4.gif")    # Ensure this file exists
-    turtle.tracer(0)                           # Disable auto-screen updates
-    turtle.hideturtle()                        # Hide the main turtle
-    return screen
-
-def setup_airplane():
-    """Create and return the player airplane."""
-    airplane = PlayerAirplane(position=(0, -150), velocity=(0, 0), shape="AIRPLANE.gif", health=3, size=20)
-    return airplane
-
-def setup_enemy_airplane():
-    """Create and return the enemy airplane."""
-    enemy_airplane = EnemyAirplane(position=(0, 150), velocity=(0, 0), shape="AIRPLANE_4.gif", health=3, size=20)
-    return enemy_airplane
-
-def game_loop():
-    """Main game loop to update game state."""
-    # Update player and enemy airplanes
-    player.update(enemy)
-    enemy.update(player)  # Enemy shooting logic is handled here
-
-    # Draw bullets
-    player.draw_bullets()
-    enemy.draw_bullets()
-
-    # Update the screen
-    screen.update()
-
-    # Schedule the next frame
-    screen.ontimer(game_loop, 16)  # Approximately 60 FPS
-
-# Main program
-if __name__ == "__main__":
-    # Set up the screen
-    screen = setup_screen()
-
-    # Set up the airplanes
-    player = setup_airplane()
-    enemy = setup_enemy_airplane()
-
-    # Bind key press and release events
-    screen.listen()
-    screen.onkeypress(player.press_up, "Up")
-    screen.onkeyrelease(player.release_up, "Up")
-    screen.onkeypress(player.press_down, "Down")
-    screen.onkeyrelease(player.release_down, "Down")
-    screen.onkeypress(player.press_left, "Left")
-    screen.onkeyrelease(player.release_left, "Left")
-    screen.onkeypress(player.press_right, "Right")
-    screen.onkeyrelease(player.release_right, "Right")
-    screen.onkeypress(player.press_space, "space")
-    screen.onkeyrelease(player.release_space, "space")
-
-    # Start the game loop
-    game_loop()
-
-    # Keep the window open
-    screen.mainloop()

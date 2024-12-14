@@ -1,1 +1,1 @@
-turtle.done()
+  shape="AIRPLANE.gif",

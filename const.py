@@ -1,3 +1,5 @@
+# const.py
+
 # Screen dimensions
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 400
@@ -18,3 +20,9 @@ EXPLOSION_DELAY = 200  # milliseconds between explosion frames
 FPS = 33
 
 BG_IMAGE_PATHS = ["bg1.gif","bg2.gif"]
+
+
+# ความเร็ว
+PLAYER_SPEED = 5
+BULLET_SPEED = 15
+ENEMY_SPEED = 2
