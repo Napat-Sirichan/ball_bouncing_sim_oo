@@ -7,7 +7,7 @@ import math
 
 class Airplane:
     def __init__(self, position: tuple[int, int], velocity: tuple[int, int], shape: str, health: int, size=20):
-        self.size = size  
+        self.size = size
         self._shape = shape
         self._position = position
         self._velocity = velocity
@@ -24,6 +24,11 @@ class Airplane:
         # Explosion-related variables
         self._explosion_images = ["EXPLOSION_1.gif", "EXPLOSION_2.gif", "EXPLOSION_3.gif", "EXPLOSION_4.gif"]
         self._explosion_frame = 0
+        self._is_destroyed = False  # Flag to check if the airplane is destroyed
+
+        # Explosion Turtle (temporary object for explosions)
+        self._explosion_turtle = turtle.Turtle()
+        self._explosion_turtle.hideturtle()
 
     @property 
     def position(self):
@@ -60,28 +65,35 @@ class Airplane:
 
     def take_damage(self, amount: int):
         """Reduce the health of the airplane."""
+        if self._is_destroyed:
+            return  # Prevent damage after destruction
+
         self._health -= amount
         if self._health <= 0:
             self.destroy()
 
     def destroy(self):
         """Handle airplane destruction."""
+        self._is_destroyed = True  # Set destroyed flag
+        self._turtle.hideturtle()
         self._handle_explosion_step()
         print(f"{self._shape} airplane destroyed!")
 
     def _handle_explosion_step(self):
         """Handle each step of the explosion animation."""
         if self._explosion_frame < len(self._explosion_images):
-            # Register and set the current frame's shape
-            self._turtle.screen.register_shape(self._explosion_images[self._explosion_frame])
-            self._turtle.shape(self._explosion_images[self._explosion_frame])
+            # Register and set the current frame's shape for the explosion
+            self._explosion_turtle.screen.register_shape(self._explosion_images[self._explosion_frame])
+            self._explosion_turtle.shape(self._explosion_images[self._explosion_frame])
+            self._explosion_turtle.goto(self._position)  # Position explosion at airplane's location
+            self._explosion_turtle.showturtle()
             self._explosion_frame += 1
 
             # Schedule the next frame after 200ms
-            self._turtle.screen.ontimer(self._handle_explosion_step, 200)
+            self._explosion_turtle.screen.ontimer(self._handle_explosion_step, 200)
         else:
-            # After the explosion sequence ends, hide the airplane
-            self._turtle.hideturtle()
+            # After the explosion sequence ends, hide the airplane and explosion turtle
+            self._explosion_turtle.hideturtle()
 
     def add_bullet(self, bullet: 'Bullet'):
         """Add a bullet to the active bullets list."""
@@ -89,7 +101,7 @@ class Airplane:
 
     def update_bullets(self, target: 'Airplane'):
         """Update all active bullets."""
-
+        pass  # Implement bullet updating logic
 
     def draw_bullets(self):
         """Draw all active bullets."""
