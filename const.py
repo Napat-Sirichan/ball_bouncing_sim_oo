@@ -1,3 +1,5 @@
+# const.py
+
 # Screen dimensions
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 820
@@ -13,17 +15,28 @@ BLACK = "#000000"
 PLAYER = 1
 ENEMY = 2
 
-# Explosion properties (optional)
-EXPLOSION_FRAMES = ["EXPLOSION_1.gif", "EXPLOSION_2.gif", "EXPLOSION_3.gif", "EXPLOSION_4.gif"]
+# Explosion properties
+EXPLOSION_FRAMES = [
+    "EXPLOSION_1.gif",
+    "EXPLOSION_2.gif",
+    "EXPLOSION_3.gif",
+    "EXPLOSION_4.gif"
+]
 EXPLOSION_DELAY = 200  # milliseconds between explosion frames
 
-FPS = 1
-SCROLL_SPEED = 6 
+FPS = 200
+SCROLL_SPEED = 6
 
 BG_IMAGE_PATHS = ["bg1.gif", "bg2.gif"]
-ENEMY_PIC = ["AIRPLANE_2.gif", "AIRPLANE_3.gif", "AIRPLANE_4.gif", "AIRPLANE_5.gif"]
+ENEMY_PIC = [
+    "AIRPLANE_2.gif",
+    "AIRPLANE_3.gif",
+    "AIRPLANE_4.gif",
+    "AIRPLANE_5.gif"
+]
 PLAYER_PIC = "AIRPLANE.gif"
-HEART = ["HEART_FULL","HEART_BROKE"]
+HEART_FULL = "HEART_FULL.gif"
+HEART_BROKE = "HEART_BROKE.gif"
 
 # Player and Enemy Speeds
 PLAYER_SPEED = 5
@@ -37,3 +50,15 @@ MYSTERY_BALL3 = 3
 
 MYSTERY_BALL_SPAWN_RATE = 5  # Percentage chance of spawning a mystery ball (1-100)
 MYSTERY_BALL_LIFETIME = 5    # Seconds the ability lasts
+
+# Game Over Constants
+GAME_OVER_TEXT = "Game Over"
+GAME_OVER_FONT = ("Arial", 80, "bold")
+GAME_OVER_COLOR = WHITE
+GAME_OVER_BG_COLOR = BLACK
+
+# Airplane Shapes
+AIRPLANE_2 = "AIRPLANE_2.gif"
+AIRPLANE_3 = "AIRPLANE_3.gif"
+AIRPLANE_4 = "AIRPLANE_4.gif"
+AIRPLANE_5 = "AIRPLANE_5.gif"
