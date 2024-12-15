@@ -24,7 +24,7 @@ EXPLOSION_FRAMES = [
 ]
 EXPLOSION_DELAY = 200  # milliseconds between explosion frames
 
-FPS = 200
+FPS = 1000
 SCROLL_SPEED = 6
 
 BG_IMAGE_PATHS = ["bg1.gif", "bg2.gif"]
@@ -62,3 +62,10 @@ AIRPLANE_2 = "AIRPLANE_2.gif"
 AIRPLANE_3 = "AIRPLANE_3.gif"
 AIRPLANE_4 = "AIRPLANE_4.gif"
 AIRPLANE_5 = "AIRPLANE_5.gif"
+
+
+# Login Screen Constants
+LOGIN_BG_COLORS = ["#FF5733", "#33FF57", "#3357FF", "#FF33A8", "#A833FF"] 
+AIRPLANE_LOGO = "AIRPLANE_LOGO.gif"
+LOGO_ROTATION_SPEED = 5  
+LOGO_FLIP_INTERVAL = 500 
