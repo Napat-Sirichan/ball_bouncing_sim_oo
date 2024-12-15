@@ -69,29 +69,54 @@ def scroll_background():
 screen.register_shape(PLAYER_PIC)
 p = PlayerAirplane((0, 0), (5, 5), PLAYER_PIC, 3, size=40)
 
-# Function to display text on the screen (using one turtle object)
+# Function to display text on the screen
 display_turtle = turtle.Turtle()
 display_turtle.hideturtle()
 display_turtle.penup()
-display_turtle.color(WHITE)
 
 def display_text(x, y, text, font=("Arial", 20, "normal")):
     display_turtle.goto(x, y)
-    display_turtle.clear()  # Clear old text before drawing new text
     display_turtle.write(text, font=font)
 
 # Score management
+score_text = None  # Global variable to store the score text turtle
+
 def display_score():
-    # Display username at a fixed position (static text)
-    display_turtle.goto(0, 270)  # Positioning the username at the top
+    global score_text
+    if score_text:  # Clear old score if it exists
+        score_text.clear()
+    # Create a new turtle for score and display it
+    score_text = turtle.Turtle()
+    score_text.hideturtle()
+    score_text.penup()
+    score_text.color(WHITE)
+    score_text.goto(0, 250)  # Position the score at the top
+    score_text.write(f"{username} Score: {p.score}", align="center", font=("Arial", 20, "normal"))
+
+# Function to display health (hearts) using the same display_turtle
+def health_ui():
+    # Clear previous health display
     display_turtle.clear()
-    display_turtle.write(f"Player: {username}", align="center", font=("Arial", 16, "normal"))
 
-    # Display score at a fixed position
-    display_turtle.goto(0, 250)  # Adjust the score position lower than the username
-    display_turtle.write(f"Score: {p.score}", align="center", font=("Arial", 20, "normal"))
+    # Display health with heart images
+    if p._health >= 3:
+        display_image(-200, -300, heart_full)
+        display_image(-160, -300, heart_full)
+        display_image(-120, -300, heart_full)
+    elif p._health == 2:
+        display_image(-200, -300, heart_full)
+        display_image(-160, -300, heart_full)
+        display_image(-120, -300, heart_broke)
+    elif p._health == 1:
+        display_image(-200, -300, heart_full)
+        display_image(-160, -300, heart_broke)
+        display_image(-120, -300, heart_broke)
+    elif p._health == 0:
+        display_image(-200, -300, heart_broke)
+        display_image(-160, -300, heart_broke)
+        display_image(-120, -300, heart_broke)
 
-# Function to display health (hearts)
+# Function to display an image (e.g., hearts)
 def display_image(x, y, image_shape):
     display_turtle.goto(x, y)
     display_turtle.shape(image_shape)
@@ -100,7 +125,7 @@ def display_image(x, y, image_shape):
 # ฟังก์ชันเพื่อสร้าง mystery ball
 def spawn_mystery_ball():
     """Randomly spawn a mystery ball and drop it from the top."""
-    mystery_types = [1, 2, 3] 
+    mystery_types = [1, 2, 3]
     mystery_type = random.choice(mystery_types)
     mystery_ball = MysteryBall(20, random.randint(-SCREEN_WIDTH // 2 + 50, SCREEN_WIDTH // 2 - 50), SCREEN_HEIGHT // 2 - 50, 0, -5, "red", mystery_type)
     return mystery_ball
@@ -132,7 +157,8 @@ def game_loop():
     p.update(target=enemies)
 
     # Update health and score UI
-    display_score()  # Update the score and username display
+    health_ui()  # Update health display
+    display_score()  # Update score display
 
     # Check and update mystery balls
     for ball in mystery_balls[:]:
@@ -186,5 +212,5 @@ screen.listen()
 # Start the game
 scroll_background()
 game_loop()
-screen.tracer(0)
+
 turtle.mainloop()

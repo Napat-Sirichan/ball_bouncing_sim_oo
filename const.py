@@ -17,7 +17,7 @@ ENEMY = 2
 EXPLOSION_FRAMES = ["EXPLOSION_1.gif", "EXPLOSION_2.gif", "EXPLOSION_3.gif", "EXPLOSION_4.gif"]
 EXPLOSION_DELAY = 200  # milliseconds between explosion frames
 
-FPS = 16
+FPS = 1
 SCROLL_SPEED = 6 
 
 BG_IMAGE_PATHS = ["bg1.gif", "bg2.gif"]
