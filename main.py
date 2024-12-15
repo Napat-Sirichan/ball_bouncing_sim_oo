@@ -1,5 +1,3 @@
-# main.py
-
 import turtle
 import tkinter as tk
 import random
@@ -332,10 +330,10 @@ class GameController:
                 self.player.score += 1
 
         if not self.enemies:
-            for _ in range(random.randint(1, 3)):
+            for _ in range(random.randint(1, 4)):
                 self.spawn_enemy()
 
-        if self.player.score % 5 == 0 and self.player.score != self.last_score_used_to_spawn:
+        if self.player.score % 7 == 0 and self.player.score != self.last_score_used_to_spawn:
             self.spawn_mystery_ball()
             self.last_score_used_to_spawn = self.player.score
 

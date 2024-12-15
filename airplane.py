@@ -4,6 +4,8 @@ from bullet import Bullet
 import time
 import math
 
+STATE_PATROL = "Patrol"
+STATE_ATTACK = "Attack"
 
 class Airplane:
     def __init__(self, position, velocity, shape, health, size=40):
@@ -64,7 +66,7 @@ class Airplane:
     def take_damage(self, amount):
         if self._is_destroyed:
             return
-        self._health = max(0, self._health - amount)  # Clamp health to 0
+        self._health = max(0, self._health - amount)
         if self._health <= 0:
             self.destroy()
 
@@ -103,7 +105,6 @@ class Airplane:
                 bullet.hide_bullet()
                 self._bullets.remove(bullet)
                 target.take_damage(1)
-                # Removed target.respawn() เนื่องจากไม่มีเมธอดนี้
             elif bullet.is_off_screen():
                 bullet.hide_bullet()
                 self._bullets.remove(bullet)
@@ -177,21 +178,17 @@ class PlayerAirplane(Airplane):
     def activate_tridirectional_shooting(self):
         self.is_tridirectional = True
         self.ability_activation_time = time.time()
-        print("Tri-Directional Shooting Activated!")
 
     def increase_health(self):
-        self._health = min(3, self._health + 1)  # เพิ่มสุขภาพไม่เกิน 3
-        print(f"Health increased! Current health: {self._health}")
+        self._health = min(3, self._health + 1)
 
     def double_speed(self):
         self.speed_multiplier = 1.8
         self.ability_activation_time = time.time()
-        print("Speed Increased to 1.8x!")
 
     def deactivate_ability(self):
         self.is_tridirectional = False
         self.speed_multiplier = 1.0
-        print("Abilities deactivated.")
 
     def move_airplane_directional(self):
         dx, dy = 0, 0
@@ -214,14 +211,14 @@ class PlayerAirplane(Airplane):
 
         turtle.update()
 
-    def update(self, target):
+    def update(self, enemies):
         current_time = time.time()
 
         if self.is_tridirectional and (current_time - self.ability_activation_time) > MYSTERY_BALL_LIFETIME:
             self.deactivate_ability()
 
         self.move_airplane_directional()
-        self.update_bullets(target)
+        self.update_bullets(enemies)
 
     def update_bullets(self, enemies):
         for bullet in self._bullets[:]:
@@ -262,7 +259,6 @@ class PlayerAirplane(Airplane):
                         owner=PLAYER
                     )
                     self.add_bullet(bullet)
-                print("Tri-Directional Shooting Activated!")
             else:
                 bullet = Bullet(
                     x=self.x,
@@ -272,8 +268,6 @@ class PlayerAirplane(Airplane):
                     owner=PLAYER
                 )
                 self.add_bullet(bullet)
-        else:
-            print("Shooting is on cooldown!")
 
 
 class EnemyAirplane(Airplane):
@@ -284,11 +278,64 @@ class EnemyAirplane(Airplane):
         self.max_bullets = 5
         self.bullet_count = 0
 
-    def move_enemy_airplane(self, target):
-        new_x, new_y = self.x, self.y - ENEMY_SPEED
+        # Attack_distance เพิ่ม 1.5 เท่า
+        # เดิมคือ 200 -> 200 * 1.5 = 300
+        self.attack_distance = 300
+
+        # ความเร็วลงใน Attack state
+        self.attack_speed = 8
+
+        self.state = STATE_PATROL
+        self.patrol_left_bound = -100
+        self.patrol_right_bound = 100
+        self.patrol_speed = 2
+        self.moving_right = True
+
+    def handle_state_machine(self, target):
+        if self._is_destroyed:
+            return
+
+        dist = self.distance(target)
+        # ตรวจสอบก่อนว่า enemy อยู่เหนือ player หรือไม่
+        if self.y > target.y:
+            # ถ้าอยู่เหนือผู้เล่นแล้ว และระยะน้อยกว่า attack_distance ให้เป็น Attack
+            if dist < self.attack_distance:
+                self.state = STATE_ATTACK
+            else:
+                self.state = STATE_PATROL
+        else:
+            # ถ้าไม่อยู่เหนือผู้เล่น ให้กลับไป Patrol
+            self.state = STATE_PATROL
+
+    def distance(self, other):
+        dx = self.x - other.x
+        dy = self.y - other.y
+        return math.sqrt(dx**2 + dy**2)
+
+    def move_patrol(self):
+        # Move left and right within patrol bounds
+        if self.moving_right:
+            new_x = self.x + self.patrol_speed
+            if new_x > self.patrol_right_bound:
+                new_x = self.patrol_right_bound
+                self.moving_right = False
+        else:
+            new_x = self.x - self.patrol_speed
+            if new_x < self.patrol_left_bound:
+                new_x = self.patrol_left_bound
+                self.moving_right = True
+
+        new_y = self.y - ENEMY_SPEED
         if new_y < -SCREEN_HEIGHT / 2 + self.size:
-            target.take_damage(1)
-            self.destroy()
+            self.position = (new_x, new_y)
+        else:
+            self.position = (new_x, new_y)
+
+    def move_attack(self, target):
+        new_x = self.x
+        new_y = self.y - self.attack_speed
+        if new_y < -SCREEN_HEIGHT / 2 + self.size:
+            self.position = (new_x, new_y)
         else:
             self.position = (new_x, new_y)
 
@@ -296,36 +343,45 @@ class EnemyAirplane(Airplane):
         if self._is_destroyed:
             return
 
+        # In Attack state, we shoot faster and bullet vy *1.8
+        if self.state == STATE_ATTACK:
+            attack_cooldown = max(0.5, self.shot_cooldown / 2.0)
+            self.shoot_based_on_shape(target, attack_cooldown, enhanced_vy_multiplier=1.8)
+        else:
+            # ใช้ค่าปกติ
+            self.shoot_based_on_shape(target, self.shot_cooldown, enhanced_vy_multiplier=1.0)
+
+    def shoot_based_on_shape(self, target, cooldown, enhanced_vy_multiplier=1.0):
         current_time = time.time()
-
+        # ส่ง enhanced_vy_multiplier ไปยังฟังก์ชันยิงเพื่อปรับความเร็วกระสุน
         if self.shape == AIRPLANE_2:
-            self.shoot_normal(current_time)
+            self.shoot_normal(current_time, cooldown, enhanced_vy_multiplier)
         elif self.shape == AIRPLANE_3:
-            self.shoot_tri_directional(current_time)
+            self.shoot_tri_directional(current_time, cooldown, enhanced_vy_multiplier)
         elif self.shape == AIRPLANE_4:
-            self.shoot_with_limit(current_time)
+            self.shoot_with_limit(current_time, cooldown, enhanced_vy_multiplier)
         elif self.shape == AIRPLANE_5:
-            self.shoot_fast(current_time)
+            self.shoot_fast(current_time, cooldown, enhanced_vy_multiplier)
 
-    def shoot_normal(self, current_time):
-        if current_time - self.last_shot_time > self.shot_cooldown:
+    def shoot_normal(self, current_time, cooldown, enhanced_vy_multiplier):
+        if current_time - self.last_shot_time > cooldown:
             self.last_shot_time = current_time
             bullet = Bullet(
                 x=self.x,
                 y=self.y - self.size - 5,
                 vx=0,
-                vy=-5,
+                vy=-5 * enhanced_vy_multiplier,
                 owner=ENEMY
             )
             self.add_bullet(bullet)
 
-    def shoot_tri_directional(self, current_time):
-        if current_time - self.last_shot_time > self.shot_cooldown:
+    def shoot_tri_directional(self, current_time, cooldown, enhanced_vy_multiplier):
+        if current_time - self.last_shot_time > cooldown:
             self.last_shot_time = current_time
             angles = [-100, -90, -80]
             for angle in angles:
                 dx = math.cos(math.radians(angle)) * 5
-                dy = math.sin(math.radians(angle)) * 5
+                dy = math.sin(math.radians(angle)) * 5 * enhanced_vy_multiplier
                 bullet = Bullet(
                     x=self.x,
                     y=self.y - self.size - 5,
@@ -335,37 +391,49 @@ class EnemyAirplane(Airplane):
                 )
                 self.add_bullet(bullet)
 
-    def shoot_with_limit(self, current_time):
+    def shoot_with_limit(self, current_time, cooldown, enhanced_vy_multiplier):
         if len(self._bullets) >= self.max_bullets:
             self._bullets[0].hide_bullet()
             self._bullets.pop(0)
 
-        if current_time - self.last_shot_time > self.shot_cooldown:
+        if current_time - self.last_shot_time > cooldown:
             self.last_shot_time = current_time
             bullet = Bullet(
                 x=self.x,
                 y=self.y - self.size - 5,
                 vx=0,
-                vy=-5,
+                vy=-5 * enhanced_vy_multiplier,
                 owner=ENEMY
             )
             self.add_bullet(bullet)
 
-    def shoot_fast(self, current_time):
-        if current_time - self.last_shot_time > 0.5:
+    def shoot_fast(self, current_time, cooldown, enhanced_vy_multiplier):
+        if current_time - self.last_shot_time > cooldown:
             self.last_shot_time = current_time
             bullet = Bullet(
                 x=self.x,
                 y=self.y - self.size - 5,
                 vx=0,
-                vy=-5,
+                vy=-5 * enhanced_vy_multiplier,
                 owner=ENEMY
             )
             self.add_bullet(bullet)
 
     def update(self, target):
         if not self._is_destroyed:
-            self.move_enemy_airplane(target)
+            self.handle_state_machine(target)
+
+            if self.state == STATE_PATROL:
+                self.move_patrol()
+            elif self.state == STATE_ATTACK:
+                self.move_attack(target)
+
+            # หลังจาก move เสร็จแล้ว เช็คว่าตกขอบล่างหรือยัง
+            if self.y < -SCREEN_HEIGHT / 2 + self.size:
+                # เมื่อตกขอบล่าง: ลด hp ของ target ลง 1 แล้วทำลายตนเอง
+                target.take_damage(1)
+                self.destroy()
+
             self.update_bullets(target)
             self.handle_shooting(target)
         else:

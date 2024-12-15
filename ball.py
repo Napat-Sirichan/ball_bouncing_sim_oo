@@ -1,5 +1,3 @@
-# ball.py
-
 import turtle
 import math
 from const import *
