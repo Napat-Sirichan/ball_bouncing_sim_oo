@@ -3,6 +3,8 @@ from const import *
 from bullet import Bullet
 import time
 import math
+import pygame
+from sound_mange import * 
 
 STATE_PATROL = "Patrol"
 STATE_ATTACK = "Attack"
@@ -121,12 +123,10 @@ class Airplane:
             self.destroy()
 
     def destroy(self):
-        """
-        Destroy the airplane by hiding it and playing an explosion animation.
-        Removes all bullets associated with the airplane.
-        """
+        """Destroy the airplane by hiding it and playing an explosion animation."""
+        SoundManager.play_explosion_sound()  # Play explosion sound
         self._is_destroyed = True
-        self._health = 0 
+        self._health = 0
         self._turtle.hideturtle()
         self._turtle.clear()
         self.remove_bullets()
@@ -235,7 +235,7 @@ class PlayerAirplane(Airplane):
         self.bullet_size = size
         self.speed_multiplier = 1
         self.last_shot_time = 0
-        self.shot_cooldown = 0.2
+        self.shot_cooldown = 0.3
         self.score = 0
         self.ability_activation_time = 0
 
@@ -272,9 +272,11 @@ class PlayerAirplane(Airplane):
         self._is_right_pressed = False
 
     def press_space(self):
-        """Set the flag indicating the space key is pressed and initiate a shoot action."""
+        """Set the flag indicating the space key is pressed and initiate a shoot action with shooting sound."""
         self._is_space_pressed = True
         self.shoot()
+        SoundManager.play_shooting_sound()
+
 
     def release_space(self):
         """Unset the flag indicating the space key is pressed."""

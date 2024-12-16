@@ -1,5 +1,7 @@
+import pygame  
 from const import *
 from ball import Ball
+from sound_mange import * 
 
 class Bullet(Ball):
     """
@@ -9,7 +11,7 @@ class Bullet(Ball):
 
     def __init__(self, x, y, vx, vy, owner):
         """
-        Initialize a new Bullet instance.
+        Initialize a new Bullet instance and play the shooting sound effect.
 
         Args:
             x (float): The initial x-coordinate of the bullet.

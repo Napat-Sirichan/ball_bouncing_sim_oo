@@ -7,6 +7,7 @@ from const import *
 from airplane import PlayerAirplane, EnemyAirplane
 from mystery import MysteryBall
 from bullet import Bullet
+from sound_mange import * 
 
 class GameController:
     """
@@ -100,6 +101,7 @@ class GameController:
         Set up the login screen with changing background colors and a rotating/flipping logo.
         Binds keys for username input and starting the game.
         """
+        SoundManager.play_start_sound()  # Play start sound on login screen
         self.change_background_color()
         self.rotate_logo()
         self.flip_logo()
@@ -108,7 +110,6 @@ class GameController:
         self.screen.listen()
         self.screen.onkeypress(self.start_game, "Return")
         self.screen.onkeypress(self.backspace, "BackSpace")
-
         for char in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
             self.screen.onkeypress(lambda c=char: self.add_char(c), char)
 

@@ -3,6 +3,7 @@ import time
 from const import *
 from ball import Ball
 from airplane import PlayerAirplane
+from sound_mange import * 
 
 class MysteryBall(Ball):
     """
@@ -58,16 +59,12 @@ class MysteryBall(Ball):
 
     def activate_ability(self, player: PlayerAirplane):
         """
-        Activate the MysteryBall's ability on the player’s airplane.
-
-        Depending on the type of the MysteryBall, a different ability is granted:
-            - MYSTERY_BALL1: Player gets tri-directional shooting.
-            - MYSTERY_BALL2: Player’s health is increased by one (up to a maximum).
-            - MYSTERY_BALL3: Player’s speed is doubled.
+        Activate the MysteryBall's ability on the player's airplane.
 
         Args:
-            player (PlayerAirplane): The player’s airplane object.
+            player (PlayerAirplane): The player's airplane object.
         """
+        SoundManager.play_powerup_sound()  # Play power-up sound
         if self.type == MYSTERY_BALL1:
             player.activate_tridirectional_shooting()
         elif self.type == MYSTERY_BALL2:
