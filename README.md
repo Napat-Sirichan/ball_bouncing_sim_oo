@@ -1,108 +1,139 @@
 # Airplane Shooting Game
 
 ## Project Title
-**Airplane Shooting Game**
+Airplane Shooting Game
 
 ## Description
-A fast-paced arcade-style game where the player controls an airplane to shoot enemies, dodge bullets, and collect power-ups while progressing through increasingly challenging waves of enemies.
+A fast-paced arcade-style game where players control an airplane to shoot enemies, dodge bullets, and collect power-ups while progressing through increasingly challenging waves of enemies.
+
+---
+
+## Overview
+The **Airplane Shooting Game** is an interactive, event-driven game combining action and strategy. Players control a customizable airplane, striving to survive enemy waves using strategic shooting and dodging techniques. Exciting features include power-ups, dynamic enemy AI, and visually engaging effects.
+
+---
+
+## Features
+- **Player Control:** 
+  - Move the airplane using arrow keys.
+  - Shoot bullets using the spacebar.
+- **Enemies:**
+  - Different AI behaviors such as patrolling and attacking.
+- **Power-ups:**
+  - Collectible mystery balls grant abilities like increased speed or health recovery.
+- **Dynamic Background:**
+  - Smooth scrolling for an immersive experience.
+- **Game States:**
+  - Includes login screen, gameplay mode, and game-over state.
+  - Displays health and score on the interface.
+
+---
+
+## How to Install and Run
+1. **Clone the Repository:** 
+   - Clone the game repository from GitHub.
+2. **Install Dependencies:** 
+   - Ensure Python (3.10+) is installed.
+   - Install required libraries using `pip install -r requirements.txt`.
+3. **Run the Game:**
+   - Execute `main.py` in the terminal or Python IDE.
+
+---
+
+## Controls
+- **Arrow Keys:** Move the airplane (Up, Down, Left, Right).
+- **Spacebar:** Shoot bullets.
+
+---
+
+## Objective
+- Survive by shooting enemies, dodging bullets, and collecting power-ups.
+- The game ends when the player's health reaches zero.
+
+---
+
+## How to Play
+1. **Login Screen:** Enter your username to start the game.
+2. **Gameplay:**
+   - Move your airplane with arrow keys.
+   - Fire bullets at enemies using the spacebar.
+   - Collect MysteryBalls to gain temporary power-ups.
+3. **Score Points:**
+   - Earn 1 point for each enemy destroyed.
+   - MysteryBalls spawn based on your score milestones.
+
+---
+
+## Demo Video
+Watch the gameplay demo [here](https://youtu.be/HlaEf7U2GXU).
 
 ---
 
 ## Game Rules
-
-Here are the detailed rules and mechanics of the game:
-
-- **Player Controls**:
-  - Use the **arrow keys** to move the airplane (Up, Down, Left, Right).
-  - Press the **Spacebar** to shoot bullets.
-
-- **Objective**:
-  - The main goal is to destroy enemy airplanes while avoiding their bullets and collecting MysteryBalls.
-  - The game ends when the player's health reaches 0.
-
-- **Scoring**:
-  - Destroying an enemy airplane gives **1 point**.
-  - The player's score is displayed at the top of the screen.
-  - As the player earns points, MysteryBalls will spawn at certain milestones.
-
-- **MysteryBalls**:
-  - MysteryBalls spawn randomly based on the player's score.
-  - Collecting a MysteryBall grants one of the following power-ups:
-    - **Health Boost**: Restores some of the player's health.
-    - **Tri**: Doubles the score for a limited time.
-    - **Invincibility**: Makes the player invincible for a short time.
-  - MysteryBalls disappear if not collected in time.
-
-- **Health**:
-  - The player starts with **3 lives (hearts)**.
-  - The player loses a life if hit by an enemy bullet or collides with an enemy airplane.
-  - The game is over when all hearts are lost.
-
-- **Enemy Airplanes**:
-  - Enemies spawn with different behaviors.
-  - Enemies can shoot bullets at the player.
-  - Some enemies follow predictable paths, while others use advanced AI (e.g., zigzagging, retreating).
-  - When an enemy is destroyed, it drops points and may spawn a MysteryBall.
-
-- **Collision and Damage**:
-  - The player's airplane and enemies both take damage when they collide.
-  - If the player collides with an enemy, they lose **one life (heart)**.
-  - If the player's bullet hits an enemy, the enemy is destroyed, and the player gains points.
-  - If the player is hit by an enemy bullet, they lose **one life (heart)**.
-
-- **Enemy Shooting Behavior**:
-  - Enemies have three states:
-    - **Idle**: The enemy does not shoot.
-    - **Attacking**: The enemy actively shoots bullets at the player.
-    - **Retreating**: The enemy moves away from the player and does not shoot.
-
-- **Losing the Game**:
-  - The game ends when the player loses all lives (hearts).
-  - A **Game Over** screen will appear, and the player can restart or exit the game.
-
-- **Game Restart**:
-  - If the player loses all hearts, the game can be restarted from the beginning.
+- **Player Controls:**
+  - Move using arrow keys; shoot using the spacebar.
+- **Objective:**
+  - Destroy enemies, collect power-ups, and avoid damage.
+- **Scoring:**
+  - 1 point is awarded for each destroyed enemy.
+- **MysteryBalls:**
+  - Provide temporary boosts such as Health or Tri-bullet abilities.
+- **Health:**
+  - Start with 3 lives (hearts).
+  - Lose a life upon getting hit or colliding with an enemy.
 
 ---
 
 ## Project Design and Implementation
 
 ### Overview
-The **Airplane Shooting Game** is an interactive, event-driven arcade game where the player controls an airplane to shoot enemies and collect power-ups. I used object-oriented programming principles to manage the game logic and enhance code maintainability.
+The game is built using object-oriented programming principles for maintainability and scalability.
 
 ### Key Classes and Concepts
-
-1. **Ball Class**:
-   - The `Ball` class is the foundation for both **Bullet** and **MysteryBall**. It defines properties like size, position, and velocity, which are extended to create the functionality of bullets and mystery balls.
-   - The `Ball` class also includes movement and collision detection methods.
-
-2. **Bullet Class**:
-   - **Bullet** inherits from the `Ball` class.
-   - It represents the bullets fired by both the player and the enemies.
-   - The `Bullet` class handles the movement of bullets, checks if they go off-screen, and draws them on the canvas.
-
-3. **MysteryBall Class**:
-   - **MysteryBall** is another subclass of `Ball`.
-   - It spawns when the player's score hits certain milestones.
-   - The **MysteryBall** provides power-ups such as health boosts, score multipliers, or invincibility when collected.
-
-4. **Enemy Airplanes**:
-   - Enemies use a **State Machine** to control their behavior. Depending on their state, enemies can:
-The **EnemyAirplane** class uses a state machine to control its behavior:
-  - **Attacking**: The enemy shoots bullets at the player.
-  - **patrol**: The enemy move left and right within patrol bounds.
-
-5. **Game Controller**:
-   - The **GameController** class manages all game objects (player, enemies, bullets, etc.).
-   - It includes methods for initializing the game, displaying the score and health, spawning enemies, and running the main game loop.
+- **`GameController`:**
+  - Manages the game lifecycle, UI, scoring, and background elements.
+- **`PlayerAirplane`:**
+  - Handles player controls, movement, and shooting.
+- **`EnemyAirplane`:**
+  - Implements AI for patrolling and attacking behaviors.
+- **`Bullet`:**
+  - Manages player and enemy bullets, including movement and collision.
+- **`Ball`:**
+  - Base class for `Bullet` and `MysteryBall`, defining physics-based behavior.
+- **`MysteryBall`:**
+  - Spawns based on score milestones, providing power-ups.
 
 ### Power-ups and MysteryBalls
-MysteryBalls are special items that spawn based on the player’s score. Collecting them grants random power-ups like:
-  - **Health Boost**: Restores health to the player.
-  - **Score Multiplier**: Doubles the points for a limited time.
-  - **Invincibility**: Grants temporary invincibility.
+- MysteryBalls spawn randomly at score milestones.
+- Grants temporary abilities such as:
+  - **Health Boost:** Restores player health.
+  - **Tri-Bullet:** Fires three bullets simultaneously.
+    
+---
 
-This adds variety and challenge to the game, making each encounter with enemies unique.
+## Key Functionalities
+- Smooth player movement and shooting using key events.
+- Collision detection for bullets, enemies, and power-ups.
+- AI-driven enemy behavior with attack and patrol states.
+- Randomly spawned power-ups managed via timers.
+
+---
+
+## Testing
+- **Collision Handling:** Tested for accuracy with enemies and power-ups.
+- **Power-up Activation:** Verified correct activation and deactivation timing.
+- **Game State Transitions:** Ensured smooth transitions between login, gameplay, and game-over states.
+- **Performance:** Optimized for smooth gameplay even with high object counts.
+
+### Known Bugs
+- Occasional overlapping of enemy spawns.
+- Rare delays in power-up deactivation due to frame timing.
+
+---
+
+## Project Sophistication Level
+- **Rating:** 90/100
+- Includes dynamic AI interactions, engaging mechanics like tri-directional shooting, and state-driven enemy behavior.
 
 ---
 
