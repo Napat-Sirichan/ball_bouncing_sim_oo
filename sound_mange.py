@@ -10,10 +10,10 @@ class SoundManager:
     pygame.mixer.init()
 
     # Load sounds
-    START_SOUND = pygame.mixer.Sound("Start.wav")
-    POWERUP_SOUND = pygame.mixer.Sound("Powerup_sound.wav")
-    EXPLOSION_SOUND = pygame.mixer.Sound("Explosion_sound.wav")
-    SHOOTING_SOUND = pygame.mixer.Sound("Shooting.wav")
+    START_SOUND = pygame.mixer.Sound(START)
+    POWERUP_SOUND = pygame.mixer.Sound(POWERUP)
+    EXPLOSION_SOUND = pygame.mixer.Sound(EXPLOSION)
+    SHOOTING_SOUND = pygame.mixer.Sound(SHOOT)
 
     @staticmethod
     def play_start_sound():
