@@ -1,6 +1,8 @@
 import turtle
 import tkinter as tk
 import random
+import csv
+import os
 from const import *
 from airplane import PlayerAirplane, EnemyAirplane
 from mystery import MysteryBall
@@ -8,11 +10,11 @@ from bullet import Bullet
 
 class GameController:
     """
-    A class to control the Airplane Shooting Game.
+    Control the Airplane Shooting Game.
 
-    This class handles the game initialization, login screen, background scrolling, 
-    player and enemy spawning, score and health display, and the main game loop. 
-    It also provides a mechanism to restart the game after Game Over.
+    This class handles the game lifecycle: showing the login screen, starting the game,
+    updating objects, handling collisions, ending the game, saving scores, and displaying
+    a scoreboard.
     """
 
     def __init__(self):
@@ -22,7 +24,7 @@ class GameController:
         self.screen.setup(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
         self.screen.title("Airplane Shooting Game")
         self.screen.bgcolor(BLACK)
-        self.screen.tracer(0)  # Turn off automatic screen updates
+        self.screen.tracer(0)
         self.canvas = self.screen.getcanvas()
 
         # Register image shapes
@@ -51,7 +53,7 @@ class GameController:
             font=("Arial", 24, "bold")
         )
 
-        # Turtle for instructions (username input)
+        # Turtle for username instruction
         self.instruction_turtle = turtle.Turtle()
         self.instruction_turtle.hideturtle()
         self.instruction_turtle.penup()
@@ -67,6 +69,12 @@ class GameController:
         self.game_over_turtle = turtle.Turtle()
         self.game_over_turtle.hideturtle()
         self.game_over_turtle.penup()
+
+        # Turtle for scoreboard display
+        self.scoreboard_turtle = turtle.Turtle()
+        self.scoreboard_turtle.hideturtle()
+        self.scoreboard_turtle.penup()
+        self.scoreboard_turtle.color(WHITE)
 
         # Turtle for displaying score and hearts
         self.display_turtle = turtle.Turtle()
@@ -85,17 +93,18 @@ class GameController:
         self.last_score_used_to_spawn = -1
         self.game_started = False
 
-        # Start the login screen workflow
         self.login_screen()
 
     def login_screen(self):
-        """Set up the login screen with changing background colors and rotating/flipping logo."""
-        # Start background color change and logo animation
+        """
+        Set up the login screen with changing background colors and a rotating/flipping logo.
+        Binds keys for username input and starting the game.
+        """
         self.change_background_color()
         self.rotate_logo()
         self.flip_logo()
 
-        # Key bindings for username input and confirmation
+        # Bind keys for username input
         self.screen.listen()
         self.screen.onkeypress(self.start_game, "Return")
         self.screen.onkeypress(self.backspace, "BackSpace")
@@ -104,7 +113,12 @@ class GameController:
             self.screen.onkeypress(lambda c=char: self.add_char(c), char)
 
     def add_char(self, char):
-        """Add a character to the current username input and update the display."""
+        """
+        Add a character to the current username input and update the display.
+
+        Args:
+            char (str): The character to add.
+        """
         if not self.game_started:
             self.current_input += char
             self.update_username_display()
@@ -140,7 +154,6 @@ class GameController:
         # Set main game background
         self.screen.bgcolor(SKYBLUE)
 
-        # Initialize the game entities
         self.spawn_background()
         self.initialize_game_objects()
         self.bind_keys()
@@ -152,10 +165,15 @@ class GameController:
             return
         new_color = random.choice(LOGIN_BG_COLORS)
         self.screen.bgcolor(new_color)
-        self.screen.ontimer(self.change_background_color, 1000)  # Change color every second
+        self.screen.ontimer(self.change_background_color, 1000)  # Change every second
 
     def rotate_logo(self, angle=0):
-        """Rotate the logo continuously on the login screen."""
+        """
+        Rotate the logo continuously on the login screen.
+
+        Args:
+            angle (int): The current angle of rotation.
+        """
         if self.game_started:
             return
         self.logo_turtle.setheading(angle)
@@ -189,16 +207,16 @@ class GameController:
         bg_height = self.bg_images[0].height()
         x_position = (SCREEN_WIDTH - bg_width) // 2 - 300
 
-        for i in range(len(self.bg_images)):
+        for i, img in enumerate(self.bg_images):
             bg_id = self.canvas.create_image(
-                x_position, i * bg_height, anchor='nw', image=self.bg_images[i]
+                x_position, i * bg_height, anchor='nw', image=img
             )
             self.bg_ids.append(bg_id)
 
         self.scroll_background()
 
     def scroll_background(self):
-        """Scroll the background images downwards to create a moving scene."""
+        """Scroll the background images downwards."""
         for bg_id in self.bg_ids:
             self.canvas.move(bg_id, 0, SCROLL_SPEED)
             x, y = self.canvas.coords(bg_id)
@@ -209,7 +227,7 @@ class GameController:
         self.screen.ontimer(self.scroll_background, int(1000 / FPS))
 
     def initialize_game_objects(self):
-        """Initialize the player airplane and other game objects."""
+        """Initialize player and other game objects."""
         self.player = PlayerAirplane(
             position=(0, -200),
             velocity=(0, 0),
@@ -233,7 +251,7 @@ class GameController:
         self.screen.listen()
 
     def display_score(self):
-        """Display the current player's score at the top of the screen."""
+        """Display the player's current score."""
         if self.score_text:
             self.score_text.clear()
         else:
@@ -249,22 +267,29 @@ class GameController:
         )
 
     def health_ui(self):
-        """Display the player's health as a series of heart images."""
+        """Display the player's health as hearts."""
         self.display_turtle.clear()
-        health = max(0, min(self.player._health, 3))  # Clamp health between 0 and 3
+        health = max(0, min(self.player._health, 3))
         hearts = [HEART_FULL] * health + [HEART_BROKE] * (3 - health)
         for i, heart in enumerate(hearts):
             self.display_image(-200 + i * 40, -300, heart)
 
     def display_image(self, x, y, image_shape):
-        """Stamp an image (heart) at a specified screen coordinate."""
+        """
+        Stamp an image at a specific coordinate.
+
+        Args:
+            x (float): The x-coordinate.
+            y (float): The y-coordinate.
+            image_shape (str): The turtle shape to stamp.
+        """
         self.display_turtle.goto(x, y)
         self.display_turtle.shape(image_shape)
         self.display_turtle.stamp()
 
     def spawn_mystery_ball(self):
-        """Spawn a mystery ball with a random type at a random horizontal position."""
-        mystery_types = [1, 2, 3]  
+        """Spawn a mystery ball with a random type at a random position."""
+        mystery_types = [1, 2, 3]
         mystery_type = random.choice(mystery_types)
         mystery_ball = MysteryBall(
             size=20,
@@ -301,7 +326,9 @@ class GameController:
                 break
 
     def display_game_over(self):
-        """Display the Game Over screen and prompt the player to restart."""
+        """
+        Display the Game Over screen, prompt for restart, save the score to CSV, and show the scoreboard.
+        """
         self.screen.bgcolor(GAME_OVER_BG_COLOR)
         self.game_over_turtle.goto(0, 0)
         self.game_over_turtle.color(GAME_OVER_COLOR)
@@ -310,8 +337,11 @@ class GameController:
             align="center",
             font=GAME_OVER_FONT
         )
-        self.health_ui()  # Show all broken hearts (if any)
-        # Prompt to restart
+        self.health_ui()  # Show hearts
+        self.save_score_to_csv()
+        self.show_scoreboard()
+
+        # Restart prompt
         self.game_over_turtle.goto(0, -50)
         self.game_over_turtle.write(
             "Press 'R' to Restart",
@@ -321,20 +351,72 @@ class GameController:
         self.screen.onkeypress(self.restart_game, "r")
         self.screen.listen()
 
+    def save_score_to_csv(self):
+        """Save the player's username and score to a CSV file."""
+        filename = "scores.csv"
+        file_exists = os.path.isfile(filename)
+
+        with open(filename, mode='a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            # Write header if file does not exist
+            if not file_exists:
+                writer.writerow(["username", "score"])
+            writer.writerow([self.username, self.player.score])
+
+    def show_scoreboard(self):
+        """
+        Show the top scores from the CSV file on screen after the game is over.
+        The scoreboard is shown below the Game Over message.
+        """
+        filename = "scores.csv"
+        if not os.path.isfile(filename):
+            return
+
+        scores = []
+        with open(filename, mode='r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                try:
+                    score = int(row["score"])
+                    scores.append((row["username"], score))
+                except ValueError:
+                    continue
+
+        # Sort scores in descending order by score
+        scores.sort(key=lambda x: x[1], reverse=True)
+
+        self.scoreboard_turtle.clear()
+        self.scoreboard_turtle.goto(0, -150)
+        self.scoreboard_turtle.write(
+            "Scoreboard",
+            align="center",
+            font=("Arial", 20, "bold")
+        )
+
+        # Show top 5 scores
+        y_offset = -180
+        for i, (user, score) in enumerate(scores[:5], start=1):
+            self.scoreboard_turtle.goto(0, y_offset)
+            self.scoreboard_turtle.write(
+                f"{i}. {user}: {score}",
+                align="center",
+                font=("Arial", 16, "normal")
+            )
+            y_offset -= 30
+
     def restart_game(self):
         """
         Restart the game from the beginning.
-
-        This method clears all game state and re-initializes 
-        the entire game as if it were started fresh.
+        This method re-initializes the GameController and starts fresh.
         """
-        # Clear the screen and all turtles
         self.screen.clear()
-        # Re-initialize the game controller
         self.__init__()
 
     def game_loop(self):
-        """Main game loop that updates player, enemies, mystery balls, and checks for events."""
+        """
+        Main game loop: update the player, enemies, mystery balls,
+        check for game over, and schedule the next frame.
+        """
         self.player.update(self.enemies)
         self.health_ui()
         self.display_score()
