@@ -32,7 +32,7 @@ class MysteryBall(Ball):
         self.time_collected = None
 
         # Set the MysteryBall image based on its type
-        self._shape = f"MYSTERY_BALL{self.type}.gif"
+        self._shape = f"picture/MYSTERY_BALL{self.type}.gif"
         self.turtle.screen.register_shape(self._shape)
         self.turtle.shape(self._shape)
         self.turtle.goto(self.x, self.y)
