@@ -42,7 +42,7 @@ The **Airplane Shooting Game** is an interactive, event-driven game combining ac
    - Clone the game repository from GitHub.
 2. **Install Dependencies:** 
    - Ensure Python (3.10+) is installed.
-   - Install required libraries using `pip install -r requirements.txt`.
+   - Install required libraries using `pip install pygame`.
 3. **Run the Game:**
    - Execute `main.py` in the terminal or Python IDE.
 
